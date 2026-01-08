@@ -147,6 +147,7 @@ serve(async (req) => {
 
       const customerMetadata = {
         companyName: customerData.companyName || '',
+        restaurantName: customerData.restaurantName || '',
         vatId: customerData.vatId || '',
         phone: customerData.phone || '',
         address: customerData.address || '',
@@ -272,6 +273,7 @@ serve(async (req) => {
         customDescription: customDescription || '',
         paymentMethods: (paymentMethods || []).join(','),
         companyName: customerData?.companyName || '',
+        restaurantName: customerData?.restaurantName || '',
         vatId: customerData?.vatId || '',
         phone: customerData?.phone || '',
         source: 'winerim_sales_portal',
