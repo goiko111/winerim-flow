@@ -30,6 +30,7 @@ export const CheckoutPage = () => {
   const [termsError, setTermsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CompanyFormData | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   // Parse URL parameters
   const customPrice = searchParams.get('customPrice') 
@@ -97,8 +98,16 @@ export const CheckoutPage = () => {
   // Hide payment method selector if only specific methods are allowed from URL
   const showPaymentSelector = !allowedMethods || allowedMethods.length > 1;
 
+  const handleFormChange = (data: Partial<CompanyFormData>, isValid: boolean) => {
+    if (isValid) {
+      setFormData(data as CompanyFormData);
+    }
+    setIsFormValid(isValid);
+  };
+
   const handleFormSubmit = (data: CompanyFormData) => {
     setFormData(data);
+    setIsFormValid(true);
   };
 
   const handlePaymentClick = async () => {
@@ -110,9 +119,9 @@ export const CheckoutPage = () => {
     }
     setTermsError(false);
 
-    // Validate form data exists
-    if (!formData) {
-      toast.error('Por favor, completa todos los campos del formulario');
+    // Validate form data exists and is valid
+    if (!formData || !isFormValid) {
+      toast.error('Por favor, completa todos los campos del formulario correctamente');
       return;
     }
 
@@ -188,7 +197,8 @@ export const CheckoutPage = () => {
 
             <div className="card-elevated p-6 sm:p-8 space-y-8">
               <CompanyForm 
-                onSubmit={handleFormSubmit} 
+                onSubmit={handleFormSubmit}
+                onFormChange={handleFormChange}
                 defaultValues={prefillData}
                 isSubmitting={isSubmitting}
               />

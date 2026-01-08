@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,8 +29,12 @@ const companyFormSchema = z.object({
 
 export type CompanyFormData = z.infer<typeof companyFormSchema>;
 
+// Export schema for external validation
+export { companyFormSchema };
+
 interface CompanyFormProps {
   onSubmit: (data: CompanyFormData) => void;
+  onFormChange?: (data: Partial<CompanyFormData>, isValid: boolean) => void;
   defaultValues?: Partial<CompanyFormData>;
   isSubmitting?: boolean;
 }
@@ -46,22 +51,29 @@ const countries = [
   { code: 'IE', name: 'Irlanda' },
 ];
 
-export const CompanyForm = ({ onSubmit, defaultValues, isSubmitting }: CompanyFormProps) => {
+export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting }: CompanyFormProps) => {
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
       country: 'ES',
       ...defaultValues,
     },
+    mode: 'onChange',
   });
 
   const selectedCountry = watch('country');
+  const formValues = watch();
+
+  // Notify parent of form changes
+  useEffect(() => {
+    onFormChange?.(formValues, isValid);
+  }, [formValues, isValid, onFormChange]);
 
   return (
     <form id="company-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
