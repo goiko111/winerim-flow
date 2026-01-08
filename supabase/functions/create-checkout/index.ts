@@ -6,15 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map plan slugs to Stripe price IDs
-const PLAN_PRICE_MAP: Record<string, string> = {
-  'startup': 'price_1RVacRRxJKzx8e3wMVJn4Vt9',      // Plan Startup - 199€/mes
-  'advanced': 'price_1RVafsRxJKzx8e3wjHxLRmJq',     // Plan Advanced - 599€/mes
-  'excellence': 'price_1RVagbRxJKzx8e3w0xKfPtWY',   // Plan Excellence - 999€/mes
-  // Winerim plans mapping
-  'mensual': 'price_1RVacRRxJKzx8e3wMVJn4Vt9',
-  'semestral': 'price_1RVafsRxJKzx8e3wjHxLRmJq',
-  'anual': 'price_1RVagbRxJKzx8e3w0xKfPtWY',
+// Plan configuration with pricing
+const PLANS: Record<string, { name: string; price: number; interval: 'month' | 'year'; intervalCount: number }> = {
+  'mensual': { name: 'Plan Mensual', price: 125, interval: 'month', intervalCount: 1 },
+  'semestral': { name: 'Plan Semestral', price: 645, interval: 'month', intervalCount: 6 },
+  'anual': { name: 'Plan Anual', price: 990, interval: 'year', intervalCount: 1 },
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -51,40 +47,37 @@ serve(async (req) => {
 
     logStep("Request body parsed", { planSlug, customPrice, hasCustomerData: !!customerData });
 
-    // 1. Determine the price to use
-    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
-
-    if (customPrice && customPrice > 0) {
-      // Use custom price_data for custom amounts
-      logStep("Using custom price", { customPrice, customDescription });
-      lineItems = [{
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: customDescription || `Plan personalizado - ${planSlug}`,
-            description: `Suscripción personalizada Winerim`,
-          },
-          unit_amount: Math.round(customPrice * 100), // Convert to cents
-          recurring: {
-            interval: 'month',
-          },
-        },
-        quantity: 1,
-      }];
-    } else {
-      // Use existing price from Stripe
-      const priceId = PLAN_PRICE_MAP[planSlug];
-      if (!priceId) {
-        throw new Error(`Unknown plan: ${planSlug}`);
-      }
-      logStep("Using existing price", { planSlug, priceId });
-      lineItems = [{
-        price: priceId,
-        quantity: 1,
-      }];
+    const basePlan = PLANS[planSlug];
+    if (!basePlan) {
+      throw new Error(`Unknown plan: ${planSlug}`);
     }
 
-    // 2. Find or create customer
+    // Determine final price and description
+    const finalPrice = customPrice && customPrice > 0 ? customPrice : basePlan.price;
+    const finalName = customDescription 
+      ? `${basePlan.name} — ${customDescription}` 
+      : basePlan.name;
+
+    logStep("Using price_data", { finalPrice, finalName, interval: basePlan.interval });
+
+    // Always use price_data for flexibility
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: finalName,
+          description: `Suscripción Winerim - ${finalName}`,
+        },
+        unit_amount: Math.round(finalPrice * 100), // Convert to cents
+        recurring: {
+          interval: basePlan.interval,
+          interval_count: basePlan.intervalCount,
+        },
+      },
+      quantity: 1,
+    }];
+
+    // Find or create customer
     let customerId: string | undefined;
     const customerEmail = customerData?.email;
 
@@ -103,12 +96,12 @@ serve(async (req) => {
         await stripe.customers.update(customerId, {
           name: customerData.companyName,
           metadata: {
-            cif: customerData.cif,
-            phone: customerData.phone,
-            address: customerData.address,
-            postalCode: customerData.postalCode,
-            city: customerData.city,
-            province: customerData.province,
+            cif: customerData.cif || '',
+            phone: customerData.phone || '',
+            address: customerData.address || '',
+            postalCode: customerData.postalCode || '',
+            city: customerData.city || '',
+            province: customerData.province || '',
           },
         });
       } else {
@@ -119,11 +112,11 @@ serve(async (req) => {
           name: customerData.companyName,
           phone: customerData.phone,
           metadata: {
-            cif: customerData.cif,
-            address: customerData.address,
-            postalCode: customerData.postalCode,
-            city: customerData.city,
-            province: customerData.province,
+            cif: customerData.cif || '',
+            address: customerData.address || '',
+            postalCode: customerData.postalCode || '',
+            city: customerData.city || '',
+            province: customerData.province || '',
           },
         });
         customerId = newCustomer.id;
@@ -131,7 +124,7 @@ serve(async (req) => {
       }
     }
 
-    // 3. Create checkout session
+    // Create checkout session
     const origin = req.headers.get("origin") || "https://winerim.com";
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -152,7 +145,7 @@ serve(async (req) => {
       },
     };
 
-    logStep("Creating checkout session", { mode: sessionParams.mode });
+    logStep("Creating checkout session", { mode: sessionParams.mode, finalPrice });
     const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
