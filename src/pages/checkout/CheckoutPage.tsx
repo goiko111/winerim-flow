@@ -90,6 +90,12 @@ export const CheckoutPage = () => {
         timestamp: Date.now(),
       }));
 
+      console.log('Calling create-checkout with:', {
+        planSlug: effectivePlan.planSlug,
+        customPrice,
+        customDescription,
+      });
+
       // Create Checkout Session via Edge Function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
@@ -102,13 +108,18 @@ export const CheckoutPage = () => {
         },
       });
 
+      console.log('Response from create-checkout:', { data, error });
+
       if (error) {
+        console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al crear la sesión de pago');
       }
 
       if (data?.sessionUrl) {
+        console.log('Redirecting to:', data.sessionUrl);
         window.location.href = data.sessionUrl;
       } else {
+        console.error('No sessionUrl in response:', data);
         throw new Error('No se recibió la URL de pago');
       }
     } catch (error) {
