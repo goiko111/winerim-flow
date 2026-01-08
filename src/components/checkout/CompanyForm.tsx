@@ -15,6 +15,7 @@ import {
 
 const companyFormSchema = z.object({
   companyName: z.string().min(2, 'El nombre de la empresa es obligatorio'),
+  restaurantName: z.string().min(2, 'El nombre del restaurante es obligatorio'),
   vatId: z.string().min(5, 'CIF/NIF/VAT es obligatorio'),
   email: z.string().email('Email inválido'),
   phone: z.string().min(9, 'Teléfono es obligatorio'),
@@ -82,16 +83,29 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
         <p className="section-header">Datos de la empresa</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <Label htmlFor="companyName">Nombre empresa / restaurante *</Label>
+          <div>
+            <Label htmlFor="companyName">Razón social / Empresa *</Label>
             <Input
               id="companyName"
               {...register('companyName')}
               className="input-premium mt-1.5"
-              placeholder="Restaurante El Bodegón"
+              placeholder="Grupo Gastronómico S.L."
             />
             {errors.companyName && (
               <p className="text-sm text-destructive mt-1">{errors.companyName.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="restaurantName">Nombre del restaurante *</Label>
+            <Input
+              id="restaurantName"
+              {...register('restaurantName')}
+              className="input-premium mt-1.5"
+              placeholder="El Bodegón"
+            />
+            {errors.restaurantName && (
+              <p className="text-sm text-destructive mt-1">{errors.restaurantName.message}</p>
             )}
           </div>
 
