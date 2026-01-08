@@ -4,6 +4,7 @@ import { appConfig } from '@/config/app';
 import { Customer, getCustomers, getActivityLogs, ActivityLog } from '@/lib/salesStore';
 import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
+import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
 import { ActivityTable } from '@/components/sales/ActivityTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,10 +80,13 @@ export const SalesDashboard = () => {
               </div>
             </div>
 
-            <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground">
-              <LogOut className="w-4 h-4 mr-2" />
-              Salir
-            </Button>
+            <div className="flex items-center gap-2">
+              <QuickLinkGenerator />
+              <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground">
+                <LogOut className="w-4 h-4 mr-2" />
+                Salir
+              </Button>
+            </div>
           </div>
         </div>
       </header>
