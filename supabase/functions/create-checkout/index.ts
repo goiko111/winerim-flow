@@ -205,6 +205,8 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
+      // Required for tax_id_collection with existing customer
+      customer_update: customerId ? { name: 'auto', address: 'auto' } : undefined,
       mode: 'subscription',
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
