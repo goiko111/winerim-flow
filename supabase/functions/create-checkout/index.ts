@@ -205,12 +205,12 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
-      customer_update: customerId ? { name: 'auto', address: 'auto' } : undefined,
       mode: 'subscription',
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      billing_address_collection: 'required',
+      // Pre-fill billing address if we have customer data
+      billing_address_collection: 'auto',
       tax_id_collection: { enabled: true },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       metadata: {
@@ -219,9 +219,17 @@ serve(async (req) => {
         customPrice: finalPrice.toString(),
         customDescription: customDescription || '',
         paymentMethods: (paymentMethods || []).join(','),
+        companyName: customerData?.companyName || '',
+        vatId: customerData?.vatId || '',
+        phone: customerData?.phone || '',
         source: 'winerim_sales_portal',
       },
     };
+
+    // If we don't have a customer ID yet, pre-fill the phone number
+    if (!customerId && customerData?.phone) {
+      sessionParams.phone_number_collection = { enabled: true };
+    }
 
     // Add bank transfer options if requested
     if (hasBankTransfer) {
@@ -232,7 +240,7 @@ serve(async (req) => {
           bank_transfer: {
             type: 'eu_bank_transfer',
             eu_bank_transfer: {
-              country: 'ES',
+              country: customerData?.country || 'ES',
             },
           },
         },
