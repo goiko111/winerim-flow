@@ -102,18 +102,19 @@ export const CheckoutPage = () => {
   };
 
   const handlePaymentClick = async () => {
-    // Trigger form validation
-    const form = document.getElementById('company-form') as HTMLFormElement;
-    form?.requestSubmit();
-
-    // Check terms
+    // Check terms first
     if (!termsAccepted) {
       setTermsError(true);
+      toast.error('Debes aceptar los términos y condiciones');
       return;
     }
     setTermsError(false);
 
-    if (!formData) return;
+    // Validate form data exists
+    if (!formData) {
+      toast.error('Por favor, completa todos los campos del formulario');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -129,14 +130,6 @@ export const CheckoutPage = () => {
         timestamp: Date.now(),
       }));
 
-      console.log('Calling create-checkout with:', {
-        planSlug: effectivePlan.planSlug,
-        customPrice,
-        customDescription,
-        billingInterval,
-        paymentMethods: allowedMethods || [paymentMethod],
-      });
-
       // Create Checkout Session via Edge Function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
@@ -151,18 +144,17 @@ export const CheckoutPage = () => {
         },
       });
 
-      console.log('Response from create-checkout:', { data, error });
-
       if (error) {
         console.error('Edge function error:', error);
         throw new Error(error.message || 'Error al crear la sesión de pago');
       }
 
       if (data?.sessionUrl) {
-        console.log('Redirecting to:', data.sessionUrl);
-        window.location.href = data.sessionUrl;
+        // Open Stripe checkout in a new tab to avoid iframe restrictions
+        window.open(data.sessionUrl, '_blank');
+        setIsSubmitting(false);
+        toast.success('Se ha abierto la pasarela de pago en una nueva pestaña');
       } else {
-        console.error('No sessionUrl in response:', data);
         throw new Error('No se recibió la URL de pago');
       }
     } catch (error) {
