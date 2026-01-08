@@ -108,13 +108,18 @@ serve(async (req) => {
       intervalCount: intervalConfig.intervalCount 
     });
 
+    // Build product description with restaurant name if available
+    const productDescription = customerData?.restaurantName 
+      ? `${customerData.restaurantName} — Suscripción Winerim`
+      : `Suscripción Winerim - ${finalName}`;
+
     // Build line items with price_data
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       price_data: {
         currency: 'eur',
         product_data: {
           name: finalName,
-          description: `Suscripción Winerim - ${finalName}`,
+          description: productDescription,
         },
         unit_amount: Math.round(finalPrice * 100), // Convert to cents
         recurring: {
@@ -257,13 +262,15 @@ serve(async (req) => {
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
       // Required for tax_id_collection with existing customer
-      customer_update: customerId ? { name: 'auto', address: 'auto' } : undefined,
+      customer_update: customerId ? { name: 'auto', address: 'auto', shipping: 'auto' } : undefined,
       mode: 'subscription',
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      // Pre-fill billing address if we have customer data
-      billing_address_collection: 'auto',
+      // Make billing address required
+      billing_address_collection: 'required',
+      // Enable phone number collection
+      phone_number_collection: { enabled: true },
       tax_id_collection: { enabled: true },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       metadata: {
@@ -279,11 +286,6 @@ serve(async (req) => {
         source: 'winerim_sales_portal',
       },
     };
-
-    // If we don't have a customer ID yet, pre-fill the phone number
-    if (!customerId && customerData?.phone) {
-      sessionParams.phone_number_collection = { enabled: true };
-    }
 
     // Add bank transfer options if requested
     if (hasBankTransfer) {
