@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Shield, Lock } from 'lucide-react';
-import { getPlanBySlug } from '@/config/plans';
+import { getPlanBySlug, Plan } from '@/config/plans';
 import { appConfig, PaymentMethod } from '@/config/app';
 import { CheckoutHeader } from '@/components/checkout/CheckoutHeader';
 import { PlanSummaryCard } from '@/components/checkout/PlanSummaryCard';
@@ -11,6 +11,14 @@ import { TermsCheckbox } from '@/components/checkout/TermsCheckbox';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Interval labels for custom plans
+const INTERVAL_LABELS: Record<string, string> = {
+  'monthly': 'Mensual',
+  'quarterly': 'Trimestral', 
+  'semestral': 'Semestral',
+  'annual': 'Anual',
+};
 
 export const CheckoutPage = () => {
   const { planSlug } = useParams<{ planSlug: string }>();
@@ -23,27 +31,52 @@ export const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CompanyFormData | null>(null);
 
-  const plan = planSlug ? getPlanBySlug(planSlug) : undefined;
-
-  // Parse prefill data from URL
-  const prefillData = searchParams.get('prefill')
-    ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
-    : undefined;
-
-  // Parse custom pricing from URL
+  // Parse URL parameters
   const customPrice = searchParams.get('customPrice') 
     ? parseFloat(searchParams.get('customPrice')!) 
     : null;
   const customDescription = searchParams.get('customDesc') 
     ? decodeURIComponent(searchParams.get('customDesc')!) 
     : null;
-  
-  // Effective plan with custom price override
-  const effectivePlan = plan ? {
-    ...plan,
-    price: customPrice ?? plan.price,
-    name: customDescription ? `${plan.name} — ${customDescription}` : plan.name,
-  } : undefined;
+  const billingInterval = searchParams.get('interval') || null;
+  const allowedMethods = searchParams.get('methods')?.split(',') || null;
+
+  // Parse prefill data from URL
+  const prefillData = searchParams.get('prefill')
+    ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
+    : undefined;
+
+  // Determine if this is a custom checkout (from quick link generator)
+  const isCustomCheckout = planSlug === 'custom' && customPrice;
+
+  // Get base plan or create custom plan
+  const basePlan = planSlug && planSlug !== 'custom' ? getPlanBySlug(planSlug) : null;
+
+  // Build effective plan
+  const effectivePlan: Plan | null = isCustomCheckout
+    ? {
+        planSlug: 'custom',
+        name: customDescription 
+          ? `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'} — ${customDescription}`
+          : `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'}`,
+        price: customPrice,
+        period: billingInterval === 'annual' ? 'annual' : 'monthly',
+        features: [
+          'Acceso completo a la plataforma',
+          'Analítica avanzada de ventas',
+          'Formación de sala ilimitada',
+          'Recomendaciones de maridaje IA',
+          'Soporte prioritario',
+        ],
+        stripePaymentLinkUrl: '',
+      }
+    : basePlan
+      ? {
+          ...basePlan,
+          price: customPrice ?? basePlan.price,
+          name: customDescription ? `${basePlan.name} — ${customDescription}` : basePlan.name,
+        }
+      : null;
 
   useEffect(() => {
     if (!effectivePlan) {
@@ -55,9 +88,14 @@ export const CheckoutPage = () => {
     return null;
   }
 
-  const showBankTransfer =
-    appConfig.stripe.enableBankTransferForAnnual &&
-    (effectivePlan.period === 'annual' || effectivePlan.planSlug === 'enterprise');
+  // Determine which payment methods to show
+  const showBankTransfer = allowedMethods 
+    ? allowedMethods.includes('bank_transfer')
+    : appConfig.stripe.enableBankTransferForAnnual &&
+      (effectivePlan.period === 'annual' || effectivePlan.planSlug === 'enterprise');
+
+  // Hide payment method selector if only specific methods are allowed from URL
+  const showPaymentSelector = !allowedMethods || allowedMethods.length > 1;
 
   const handleFormSubmit = (data: CompanyFormData) => {
     setFormData(data);
@@ -86,6 +124,7 @@ export const CheckoutPage = () => {
         planSlug: effectivePlan.planSlug,
         customPrice: customPrice,
         customDescription: customDescription,
+        billingInterval,
         paymentMethod,
         timestamp: Date.now(),
       }));
@@ -94,14 +133,18 @@ export const CheckoutPage = () => {
         planSlug: effectivePlan.planSlug,
         customPrice,
         customDescription,
+        billingInterval,
+        paymentMethods: allowedMethods || [paymentMethod],
       });
 
       // Create Checkout Session via Edge Function
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           planSlug: effectivePlan.planSlug,
-          customPrice: customPrice,
+          customPrice: customPrice || effectivePlan.price,
           customDescription: customDescription,
+          billingInterval: billingInterval || (effectivePlan.period === 'annual' ? 'annual' : 'monthly'),
+          paymentMethods: allowedMethods || [paymentMethod],
           customerData: formData,
           successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/checkout/cancel`,
@@ -137,7 +180,7 @@ export const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left column: Plan summary */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <PlanSummaryCard plan={effectivePlan} isCustom={!!customPrice} />
+            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} />
           </div>
 
           {/* Right column: Form */}
@@ -158,11 +201,13 @@ export const CheckoutPage = () => {
                 isSubmitting={isSubmitting}
               />
 
-              <PaymentMethodSelector
-                value={paymentMethod}
-                onChange={setPaymentMethod}
-                showBankTransfer={showBankTransfer}
-              />
+              {showPaymentSelector && (
+                <PaymentMethodSelector
+                  value={paymentMethod}
+                  onChange={setPaymentMethod}
+                  showBankTransfer={showBankTransfer}
+                />
+              )}
 
               <TermsCheckbox
                 checked={termsAccepted}
