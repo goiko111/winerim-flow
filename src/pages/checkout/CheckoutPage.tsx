@@ -9,6 +9,8 @@ import { CompanyForm, CompanyFormData } from '@/components/checkout/CompanyForm'
 import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
 import { TermsCheckbox } from '@/components/checkout/TermsCheckbox';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const CheckoutPage = () => {
   const { planSlug } = useParams<{ planSlug: string }>();
@@ -78,53 +80,40 @@ export const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
-      if (appConfig.integrationMode === 'payment-link') {
-        // MODE 1: Redirect to Stripe Payment Link
-        // Save form data to localStorage for retrieval after payment
-        localStorage.setItem('winerim_checkout_data', JSON.stringify({
-          ...formData,
+      // Save form data to localStorage for retrieval after payment
+      localStorage.setItem('winerim_checkout_data', JSON.stringify({
+        ...formData,
+        planSlug: effectivePlan.planSlug,
+        customPrice: customPrice,
+        customDescription: customDescription,
+        paymentMethod,
+        timestamp: Date.now(),
+      }));
+
+      // Create Checkout Session via Edge Function
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
           planSlug: effectivePlan.planSlug,
           customPrice: customPrice,
           customDescription: customDescription,
-          paymentMethod,
-          timestamp: Date.now(),
-        }));
+          customerData: formData,
+          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/checkout/cancel`,
+        },
+      });
 
-        // Build URL with prefill parameters (Stripe Payment Links support some prefill)
-        const paymentUrl = new URL(effectivePlan.stripePaymentLinkUrl);
-        paymentUrl.searchParams.set('prefilled_email', formData.email);
-        
-        // Redirect to payment
-        window.location.href = paymentUrl.toString();
+      if (error) {
+        throw new Error(error.message || 'Error al crear la sesión de pago');
+      }
+
+      if (data?.sessionUrl) {
+        window.location.href = data.sessionUrl;
       } else {
-        // MODE 2: Create Checkout Session via API
-        // This is prepared for backend integration
-        const response = await fetch(appConfig.apiEndpoints.createCheckoutSession, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            priceId: effectivePlan.stripePriceId,
-            customPrice: customPrice, // For custom amounts
-            customDescription: customDescription,
-            customerData: formData,
-            paymentMethods: paymentMethod === 'sepa_debit' 
-              ? ['sepa_debit', 'card'] 
-              : ['card'],
-            successUrl: `${window.location.origin}/checkout/success`,
-            cancelUrl: `${window.location.origin}/checkout/cancel`,
-            // Stripe Checkout Session options:
-            mode: 'subscription',
-            billing_address_collection: 'required',
-            tax_id_collection: { enabled: true },
-            customer_creation: 'always',
-          }),
-        });
-
-        const { sessionUrl } = await response.json();
-        window.location.href = sessionUrl;
+        throw new Error('No se recibió la URL de pago');
       }
     } catch (error) {
       console.error('Payment error:', error);
+      toast.error('Error al procesar el pago. Por favor, inténtalo de nuevo.');
       setIsSubmitting(false);
     }
   };
