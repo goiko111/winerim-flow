@@ -24,6 +24,22 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
   'bank_transfer': 'customer_balance', // Stripe uses customer_balance for bank transfers
 };
 
+// Tax ID type mapping by country
+const getTaxIdType = (country: string): string => {
+  const taxIdMap: Record<string, string> = {
+    'ES': 'es_cif',      // Spain CIF
+    'PT': 'pt_nif',      // Portugal NIF
+    'FR': 'fr_siret',    // France SIRET
+    'IT': 'it_vat',      // Italy VAT
+    'DE': 'de_stn',      // Germany Steuernummer
+    'AT': 'at_vat',      // Austria VAT
+    'BE': 'be_vat',      // Belgium VAT
+    'NL': 'nl_vat',      // Netherlands VAT
+    'IE': 'ie_vat',      // Ireland VAT
+  };
+  return taxIdMap[country] || 'eu_vat';
+};
+
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -159,6 +175,26 @@ serve(async (req) => {
           },
           metadata: customerMetadata,
         });
+
+        // Add or update Tax ID (CIF/VAT) if provided
+        if (customerData.vatId) {
+          try {
+            // First, try to delete existing tax IDs to avoid duplicates
+            const existingTaxIds = await stripe.customers.listTaxIds(customerId);
+            for (const taxId of existingTaxIds.data) {
+              await stripe.customers.deleteTaxId(customerId, taxId.id);
+            }
+            // Add the new tax ID
+            const taxType = getTaxIdType(customerData.country);
+            await stripe.customers.createTaxId(customerId, {
+              type: taxType,
+              value: customerData.vatId,
+            });
+            logStep("Tax ID updated", { vatId: customerData.vatId, type: taxType });
+          } catch (taxError) {
+            logStep("Warning: Could not set Tax ID", { error: String(taxError) });
+          }
+        }
       } else {
         // Create new customer with all data
         logStep("Creating new customer", { email: customerEmail, companyName: customerData.companyName });
@@ -177,6 +213,20 @@ serve(async (req) => {
         });
         customerId = newCustomer.id;
         logStep("Customer created", { customerId });
+
+        // Add Tax ID (CIF/VAT) if provided
+        if (customerData.vatId) {
+          try {
+            const taxType = getTaxIdType(customerData.country);
+            await stripe.customers.createTaxId(customerId, {
+              type: taxType,
+              value: customerData.vatId,
+            });
+            logStep("Tax ID added", { vatId: customerData.vatId, type: taxType });
+          } catch (taxError) {
+            logStep("Warning: Could not set Tax ID", { error: String(taxError) });
+          }
+        }
       }
     }
 
