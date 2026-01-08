@@ -4,6 +4,8 @@ import { appConfig, PaymentMethod } from '@/config/app';
 import { Customer, ActivityLog, saveActivityLog, generateId } from '@/lib/salesStore';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
-import { Copy, Mail, ExternalLink, Check, FileText } from 'lucide-react';
+import { Copy, Mail, ExternalLink, Check, FileText, Euro } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface LinkGeneratorDialogProps {
@@ -35,16 +37,28 @@ export const LinkGeneratorDialog = ({
   onLinkGenerated,
 }: LinkGeneratorDialogProps) => {
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<string>('professional');
+  const [selectedPlan, setSelectedPlan] = useState<string>('anual');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Custom pricing
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
+  const [customPrice, setCustomPrice] = useState<string>('');
+  const [customDescription, setCustomDescription] = useState<string>('');
 
   const plan = plans.find((p) => p.planSlug === selectedPlan);
 
   const showBankTransfer =
     appConfig.stripe.enableBankTransferForAnnual &&
     (plan?.period === 'annual' || selectedPlan === 'enterprise');
+
+  const getFinalPrice = () => {
+    if (useCustomPrice && customPrice) {
+      return parseFloat(customPrice);
+    }
+    return plan?.price || 0;
+  };
 
   const handleGenerateLink = async () => {
     if (!customer || !plan) return;
@@ -66,9 +80,17 @@ export const LinkGeneratorDialog = ({
     };
 
     const baseUrl = window.location.origin;
-    const checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}?prefill=${encodeURIComponent(
+    let checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}?prefill=${encodeURIComponent(
       JSON.stringify(prefillData)
     )}`;
+
+    // Add custom pricing params if enabled
+    if (useCustomPrice && customPrice) {
+      checkoutUrl += `&customPrice=${encodeURIComponent(customPrice)}`;
+      if (customDescription) {
+        checkoutUrl += `&customDesc=${encodeURIComponent(customDescription)}`;
+      }
+    }
 
     setGeneratedLink(checkoutUrl);
 
@@ -80,7 +102,7 @@ export const LinkGeneratorDialog = ({
       customerId: customer.id,
       customerName: customer.companyName,
       planSlug: plan.planSlug,
-      planName: plan.name,
+      planName: useCustomPrice ? `${plan.name} (Personalizado: ${customPrice}€)` : plan.name,
       action: 'link_created',
       paymentMethod,
       link: checkoutUrl,
@@ -144,8 +166,11 @@ El equipo de Winerim`);
 
   const resetState = () => {
     setGeneratedLink(null);
-    setSelectedPlan('professional');
+    setSelectedPlan('anual');
     setPaymentMethod('card');
+    setUseCustomPrice(false);
+    setCustomPrice('');
+    setCustomDescription('');
   };
 
   return (
@@ -176,7 +201,7 @@ El equipo de Winerim`);
               <>
                 {/* Plan selection */}
                 <div>
-                  <Label>Plan</Label>
+                  <Label>Plan base</Label>
                   <Select value={selectedPlan} onValueChange={setSelectedPlan}>
                     <SelectTrigger className="input-premium mt-1.5">
                       <SelectValue />
@@ -184,11 +209,64 @@ El equipo de Winerim`);
                     <SelectContent>
                       {plans.map((p) => (
                         <SelectItem key={p.planSlug} value={p.planSlug}>
-                          {p.name} - {p.price}€/{p.period === 'monthly' ? 'mes' : 'año'}
+                          {p.name} - {p.price}€/{p.period === 'monthly' ? 'mes' : 'periodo'}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Custom pricing toggle */}
+                <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Precio personalizado</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Activar para usar un importe diferente al del plan
+                      </p>
+                    </div>
+                    <Switch
+                      checked={useCustomPrice}
+                      onCheckedChange={setUseCustomPrice}
+                    />
+                  </div>
+
+                  {useCustomPrice && (
+                    <div className="space-y-3 animate-fade-in">
+                      <div>
+                        <Label htmlFor="customPrice">Importe (€)</Label>
+                        <div className="relative mt-1.5">
+                          <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="customPrice"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Ej: 750"
+                            value={customPrice}
+                            onChange={(e) => setCustomPrice(e.target.value)}
+                            className="input-premium pl-9"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="customDesc">Descripción (opcional)</Label>
+                        <Input
+                          id="customDesc"
+                          placeholder="Ej: Acuerdo especial 6 meses"
+                          value={customDescription}
+                          onChange={(e) => setCustomDescription(e.target.value)}
+                          className="input-premium mt-1.5"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price preview */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <span className="text-sm text-muted-foreground">Importe final:</span>
+                  <span className="text-lg font-semibold text-primary">{getFinalPrice()}€</span>
                 </div>
 
                 {/* Payment method */}
@@ -201,7 +279,7 @@ El equipo de Winerim`);
                 <Button
                   onClick={handleGenerateLink}
                   className="btn-wine w-full"
-                  disabled={isGenerating}
+                  disabled={isGenerating || (useCustomPrice && !customPrice)}
                 >
                   {isGenerating ? 'Generando...' : 'Generar enlace de pago'}
                 </Button>
