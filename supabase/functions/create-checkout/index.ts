@@ -120,36 +120,60 @@ serve(async (req) => {
         limit: 1 
       });
 
+      // Build full address string
+      const fullAddress = [
+        customerData.address,
+        customerData.postalCode,
+        customerData.city,
+        customerData.state,
+        customerData.country,
+      ].filter(Boolean).join(', ');
+
+      const customerMetadata = {
+        companyName: customerData.companyName || '',
+        vatId: customerData.vatId || '',
+        phone: customerData.phone || '',
+        address: customerData.address || '',
+        postalCode: customerData.postalCode || '',
+        city: customerData.city || '',
+        state: customerData.state || '',
+        country: customerData.country || '',
+        promoCode: customerData.promoCode || '',
+        onboardingNotes: customerData.onboardingNotes || '',
+      };
+
       if (existingCustomers.data.length > 0) {
         customerId = existingCustomers.data[0].id;
         logStep("Found existing customer", { customerId });
         
-        // Update customer metadata with latest company data
+        // Update customer with latest company data
         await stripe.customers.update(customerId, {
           name: customerData.companyName,
-          metadata: {
-            cif: customerData.cif || '',
-            phone: customerData.phone || '',
-            address: customerData.address || '',
-            postalCode: customerData.postalCode || '',
-            city: customerData.city || '',
-            province: customerData.province || '',
+          phone: customerData.phone,
+          address: {
+            line1: customerData.address,
+            city: customerData.city,
+            state: customerData.state,
+            postal_code: customerData.postalCode,
+            country: customerData.country,
           },
+          metadata: customerMetadata,
         });
       } else {
-        // Create new customer
-        logStep("Creating new customer", { email: customerEmail });
+        // Create new customer with all data
+        logStep("Creating new customer", { email: customerEmail, companyName: customerData.companyName });
         const newCustomer = await stripe.customers.create({
           email: customerEmail,
           name: customerData.companyName,
           phone: customerData.phone,
-          metadata: {
-            cif: customerData.cif || '',
-            address: customerData.address || '',
-            postalCode: customerData.postalCode || '',
-            city: customerData.city || '',
-            province: customerData.province || '',
+          address: {
+            line1: customerData.address,
+            city: customerData.city,
+            state: customerData.state,
+            postal_code: customerData.postalCode,
+            country: customerData.country,
           },
+          metadata: customerMetadata,
         });
         customerId = newCustomer.id;
         logStep("Customer created", { customerId });
