@@ -28,19 +28,34 @@ export const CheckoutPage = () => {
     ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
     : undefined;
 
+  // Parse custom pricing from URL
+  const customPrice = searchParams.get('customPrice') 
+    ? parseFloat(searchParams.get('customPrice')!) 
+    : null;
+  const customDescription = searchParams.get('customDesc') 
+    ? decodeURIComponent(searchParams.get('customDesc')!) 
+    : null;
+  
+  // Effective plan with custom price override
+  const effectivePlan = plan ? {
+    ...plan,
+    price: customPrice ?? plan.price,
+    name: customDescription ? `${plan.name} — ${customDescription}` : plan.name,
+  } : undefined;
+
   useEffect(() => {
-    if (!plan) {
+    if (!effectivePlan) {
       navigate('/');
     }
-  }, [plan, navigate]);
+  }, [effectivePlan, navigate]);
 
-  if (!plan) {
+  if (!effectivePlan) {
     return null;
   }
 
   const showBankTransfer =
     appConfig.stripe.enableBankTransferForAnnual &&
-    (plan.period === 'annual' || plan.planSlug === 'enterprise');
+    (effectivePlan.period === 'annual' || effectivePlan.planSlug === 'enterprise');
 
   const handleFormSubmit = (data: CompanyFormData) => {
     setFormData(data);
@@ -68,13 +83,15 @@ export const CheckoutPage = () => {
         // Save form data to localStorage for retrieval after payment
         localStorage.setItem('winerim_checkout_data', JSON.stringify({
           ...formData,
-          planSlug: plan.planSlug,
+          planSlug: effectivePlan.planSlug,
+          customPrice: customPrice,
+          customDescription: customDescription,
           paymentMethod,
           timestamp: Date.now(),
         }));
 
         // Build URL with prefill parameters (Stripe Payment Links support some prefill)
-        const paymentUrl = new URL(plan.stripePaymentLinkUrl);
+        const paymentUrl = new URL(effectivePlan.stripePaymentLinkUrl);
         paymentUrl.searchParams.set('prefilled_email', formData.email);
         
         // Redirect to payment
@@ -86,7 +103,9 @@ export const CheckoutPage = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            priceId: plan.stripePriceId,
+            priceId: effectivePlan.stripePriceId,
+            customPrice: customPrice, // For custom amounts
+            customDescription: customDescription,
             customerData: formData,
             paymentMethods: paymentMethod === 'sepa_debit' 
               ? ['sepa_debit', 'card'] 
@@ -118,7 +137,7 @@ export const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left column: Plan summary */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <PlanSummaryCard plan={plan} />
+            <PlanSummaryCard plan={effectivePlan} isCustom={!!customPrice} />
           </div>
 
           {/* Right column: Form */}
