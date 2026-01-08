@@ -6,11 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration with pricing
-const PLANS: Record<string, { name: string; price: number; interval: 'month' | 'year'; intervalCount: number }> = {
-  'mensual': { name: 'Plan Mensual', price: 125, interval: 'month', intervalCount: 1 },
-  'semestral': { name: 'Plan Semestral', price: 645, interval: 'month', intervalCount: 6 },
-  'anual': { name: 'Plan Anual', price: 990, interval: 'year', intervalCount: 1 },
+// Billing interval configuration
+const INTERVAL_CONFIG: Record<string, { interval: 'month' | 'year'; intervalCount: number; label: string }> = {
+  'monthly': { interval: 'month', intervalCount: 1, label: 'Mensual' },
+  'quarterly': { interval: 'month', intervalCount: 3, label: 'Trimestral' },
+  'semestral': { interval: 'month', intervalCount: 6, label: 'Semestral' },
+  'annual': { interval: 'year', intervalCount: 1, label: 'Anual' },
+  // Legacy plan slugs support
+  'mensual': { interval: 'month', intervalCount: 1, label: 'Mensual' },
+  'anual': { interval: 'year', intervalCount: 1, label: 'Anual' },
+};
+
+// Payment method mapping
+const PAYMENT_METHOD_MAP: Record<string, string> = {
+  'card': 'card',
+  'sepa_debit': 'sepa_debit',
+  'bank_transfer': 'customer_balance', // Stripe uses customer_balance for bank transfers
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -37,30 +48,51 @@ serve(async (req) => {
 
     const body = await req.json();
     const { 
-      planSlug, 
+      planSlug,
       customPrice, 
       customDescription,
+      billingInterval,
+      paymentMethods,
       customerData,
       successUrl,
       cancelUrl,
     } = body;
 
-    logStep("Request body parsed", { planSlug, customPrice, hasCustomerData: !!customerData });
+    logStep("Request body parsed", { 
+      planSlug, 
+      customPrice, 
+      billingInterval, 
+      paymentMethods,
+      hasCustomerData: !!customerData 
+    });
 
-    const basePlan = PLANS[planSlug];
-    if (!basePlan) {
-      throw new Error(`Unknown plan: ${planSlug}`);
+    // Determine interval config - use billingInterval if provided, otherwise fall back to planSlug
+    const intervalKey = billingInterval || planSlug || 'monthly';
+    const intervalConfig = INTERVAL_CONFIG[intervalKey];
+    
+    if (!intervalConfig) {
+      throw new Error(`Unknown billing interval: ${intervalKey}`);
     }
 
-    // Determine final price and description
-    const finalPrice = customPrice && customPrice > 0 ? customPrice : basePlan.price;
+    // Determine final price
+    const finalPrice = customPrice && customPrice > 0 ? customPrice : 0;
+    if (finalPrice <= 0) {
+      throw new Error('Price must be greater than 0');
+    }
+
+    // Build description
     const finalName = customDescription 
-      ? `${basePlan.name} — ${customDescription}` 
-      : basePlan.name;
+      ? `Suscripción ${intervalConfig.label} — ${customDescription}` 
+      : `Suscripción ${intervalConfig.label} Winerim`;
 
-    logStep("Using price_data", { finalPrice, finalName, interval: basePlan.interval });
+    logStep("Using price_data", { 
+      finalPrice, 
+      finalName, 
+      interval: intervalConfig.interval,
+      intervalCount: intervalConfig.intervalCount 
+    });
 
-    // Always use price_data for flexibility
+    // Build line items with price_data
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       price_data: {
         currency: 'eur',
@@ -70,8 +102,8 @@ serve(async (req) => {
         },
         unit_amount: Math.round(finalPrice * 100), // Convert to cents
         recurring: {
-          interval: basePlan.interval,
-          interval_count: basePlan.intervalCount,
+          interval: intervalConfig.interval,
+          interval_count: intervalConfig.intervalCount,
         },
       },
       quantity: 1,
@@ -124,6 +156,25 @@ serve(async (req) => {
       }
     }
 
+    // Determine payment methods
+    let stripePaymentMethods: string[] = ['card', 'sepa_debit']; // defaults
+    
+    if (paymentMethods && Array.isArray(paymentMethods) && paymentMethods.length > 0) {
+      stripePaymentMethods = paymentMethods
+        .map((m: string) => PAYMENT_METHOD_MAP[m])
+        .filter(Boolean);
+    }
+
+    // Filter out bank_transfer/customer_balance if present (requires special handling)
+    const hasBankTransfer = paymentMethods?.includes('bank_transfer');
+    const filteredPaymentMethods = stripePaymentMethods.filter(m => m !== 'customer_balance');
+
+    logStep("Payment methods configured", { 
+      requested: paymentMethods, 
+      stripe: filteredPaymentMethods,
+      hasBankTransfer 
+    });
+
     // Create checkout session
     const origin = req.headers.get("origin") || "https://winerim.com";
     
@@ -137,16 +188,41 @@ serve(async (req) => {
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
       billing_address_collection: 'required',
       tax_id_collection: { enabled: true },
-      payment_method_types: ['card', 'sepa_debit'],
+      payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       metadata: {
-        planSlug,
-        customPrice: customPrice?.toString() || '',
+        planSlug: planSlug || 'custom',
+        billingInterval: intervalKey,
+        customPrice: finalPrice.toString(),
         customDescription: customDescription || '',
+        paymentMethods: (paymentMethods || []).join(','),
         source: 'winerim_sales_portal',
       },
     };
 
-    logStep("Creating checkout session", { mode: sessionParams.mode, finalPrice });
+    // Add bank transfer options if requested
+    if (hasBankTransfer) {
+      sessionParams.payment_method_options = {
+        ...sessionParams.payment_method_options,
+        customer_balance: {
+          funding_type: 'bank_transfer',
+          bank_transfer: {
+            type: 'eu_bank_transfer',
+            eu_bank_transfer: {
+              country: 'ES',
+            },
+          },
+        },
+      };
+      // Add customer_balance to payment methods
+      (sessionParams.payment_method_types as string[]).push('customer_balance');
+    }
+
+    logStep("Creating checkout session", { 
+      mode: sessionParams.mode, 
+      finalPrice,
+      paymentMethods: sessionParams.payment_method_types 
+    });
+    
     const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 

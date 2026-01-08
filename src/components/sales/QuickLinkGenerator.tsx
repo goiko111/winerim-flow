@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { plans } from '@/config/plans';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -18,42 +17,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, Link2, Euro, Zap } from 'lucide-react';
+import { Copy, Check, Link2, Euro, Zap, CreditCard, Building2, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+type BillingInterval = 'monthly' | 'quarterly' | 'semestral' | 'annual';
+type PaymentMethodOption = 'card' | 'sepa_debit' | 'bank_transfer';
+
+const BILLING_INTERVALS: { value: BillingInterval; label: string; months: number }[] = [
+  { value: 'monthly', label: 'Mensual', months: 1 },
+  { value: 'quarterly', label: 'Trimestral', months: 3 },
+  { value: 'semestral', label: 'Semestral', months: 6 },
+  { value: 'annual', label: 'Anual', months: 12 },
+];
+
+const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard }[] = [
+  { value: 'card', label: 'Tarjeta', icon: CreditCard },
+  { value: 'sepa_debit', label: 'SEPA (Domiciliación)', icon: Building2 },
+  { value: 'bank_transfer', label: 'Transferencia bancaria', icon: Landmark },
+];
 
 export const QuickLinkGenerator = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string>('anual');
-  const [useCustomPrice, setUseCustomPrice] = useState(true);
+  
+  // Form state
   const [customPrice, setCustomPrice] = useState<string>('');
   const [customDescription, setCustomDescription] = useState<string>('');
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<PaymentMethodOption[]>(['card', 'sepa_debit']);
+  
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const plan = plans.find((p) => p.planSlug === selectedPlan);
-
-  const getFinalPrice = () => {
-    if (useCustomPrice && customPrice) {
-      return parseFloat(customPrice);
-    }
-    return plan?.price || 0;
+  const togglePaymentMethod = (method: PaymentMethodOption) => {
+    setSelectedPaymentMethods(prev => {
+      if (prev.includes(method)) {
+        // Don't allow removing the last method
+        if (prev.length === 1) return prev;
+        return prev.filter(m => m !== method);
+      }
+      return [...prev, method];
+    });
   };
 
   const handleGenerateLink = () => {
-    if (!plan) return;
+    if (!customPrice) return;
 
     const baseUrl = window.location.origin;
-    let checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}`;
-
-    // Add custom pricing params if enabled
-    if (useCustomPrice && customPrice) {
-      checkoutUrl += `?customPrice=${encodeURIComponent(customPrice)}`;
-      if (customDescription) {
-        checkoutUrl += `&customDesc=${encodeURIComponent(customDescription)}`;
-      }
+    const params = new URLSearchParams();
+    
+    params.set('customPrice', customPrice);
+    params.set('interval', billingInterval);
+    params.set('methods', selectedPaymentMethods.join(','));
+    
+    if (customDescription) {
+      params.set('customDesc', customDescription);
     }
 
+    const checkoutUrl = `${baseUrl}/checkout/custom?${params.toString()}`;
     setGeneratedLink(checkoutUrl);
   };
 
@@ -71,14 +92,16 @@ export const QuickLinkGenerator = () => {
 
   const resetState = () => {
     setGeneratedLink(null);
-    setSelectedPlan('anual');
-    setUseCustomPrice(true);
     setCustomPrice('');
     setCustomDescription('');
+    setBillingInterval('monthly');
+    setSelectedPaymentMethods(['card', 'sepa_debit']);
     setCopied(false);
   };
 
-  const canGenerate = !useCustomPrice || (useCustomPrice && customPrice);
+  const canGenerate = customPrice && parseFloat(customPrice) > 0 && selectedPaymentMethods.length > 0;
+
+  const intervalLabel = BILLING_INTERVALS.find(i => i.value === billingInterval)?.label || '';
 
   return (
     <Dialog
@@ -99,83 +122,112 @@ export const QuickLinkGenerator = () => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <Link2 className="w-5 h-5 text-primary" />
-            Generar link de pago
+            Crear link de pago personalizado
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 mt-4">
           {!generatedLink ? (
             <>
-              {/* Plan selection */}
+              {/* Price */}
               <div>
-                <Label>Plan base</Label>
-                <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <Label htmlFor="quickCustomPrice">Importe (€) *</Label>
+                <div className="relative mt-1.5">
+                  <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="quickCustomPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Ej: 750"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    className="input-premium pl-9"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Billing interval */}
+              <div>
+                <Label>Periodicidad de cobro *</Label>
+                <Select value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>
                   <SelectTrigger className="input-premium mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {plans.map((p) => (
-                      <SelectItem key={p.planSlug} value={p.planSlug}>
-                        {p.name} - {p.price}€
+                    {BILLING_INTERVALS.map((interval) => (
+                      <SelectItem key={interval.value} value={interval.value}>
+                        {interval.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Custom pricing toggle */}
-              <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Importe personalizado</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Define el importe exacto a cobrar
-                    </p>
-                  </div>
-                  <Switch
-                    checked={useCustomPrice}
-                    onCheckedChange={setUseCustomPrice}
-                  />
-                </div>
+              {/* Description */}
+              <div>
+                <Label htmlFor="quickCustomDesc">Concepto / Descripción</Label>
+                <Input
+                  id="quickCustomDesc"
+                  placeholder="Ej: Acuerdo especial Q1 2026"
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  className="input-premium mt-1.5"
+                />
+              </div>
 
-                {useCustomPrice && (
-                  <div className="space-y-3 animate-fade-in">
-                    <div>
-                      <Label htmlFor="quickCustomPrice">Importe (€)</Label>
-                      <div className="relative mt-1.5">
-                        <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="quickCustomPrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="Ej: 750"
-                          value={customPrice}
-                          onChange={(e) => setCustomPrice(e.target.value)}
-                          className="input-premium pl-9"
-                          autoFocus
+              {/* Payment methods */}
+              <div className="space-y-3">
+                <Label>Métodos de pago permitidos *</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  {PAYMENT_METHODS.map((method) => {
+                    const Icon = method.icon;
+                    const isSelected = selectedPaymentMethods.includes(method.value);
+                    return (
+                      <label
+                        key={method.value}
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border hover:border-primary/30'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => togglePaymentMethod(method.value)}
                         />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="quickCustomDesc">Concepto (opcional)</Label>
-                      <Input
-                        id="quickCustomDesc"
-                        placeholder="Ej: Acuerdo especial Q1"
-                        value={customDescription}
-                        onChange={(e) => setCustomDescription(e.target.value)}
-                        className="input-premium mt-1.5"
-                      />
-                    </div>
-                  </div>
-                )}
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className={`text-sm ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                          {method.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Price preview */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
-                <span className="text-sm text-muted-foreground">Importe a cobrar:</span>
-                <span className="text-lg font-semibold text-primary">{getFinalPrice()}€</span>
-              </div>
+              {/* Preview */}
+              {customPrice && (
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Importe:</span>
+                    <span className="text-lg font-semibold text-primary">{customPrice}€</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Cobro:</span>
+                    <span className="text-sm font-medium text-foreground">{intervalLabel}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Métodos:</span>
+                    <span className="text-sm text-foreground">
+                      {selectedPaymentMethods.map(m => 
+                        PAYMENT_METHODS.find(pm => pm.value === m)?.label
+                      ).join(', ')}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <Button
                 onClick={handleGenerateLink}
