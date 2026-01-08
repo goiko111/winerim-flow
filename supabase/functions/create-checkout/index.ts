@@ -261,17 +261,15 @@ serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
-      // Required for tax_id_collection with existing customer
-      customer_update: customerId ? { name: 'auto', address: 'auto', shipping: 'auto' } : undefined,
       mode: 'subscription',
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      // Make billing address required
-      billing_address_collection: 'required',
-      // Enable phone number collection
-      phone_number_collection: { enabled: true },
-      tax_id_collection: { enabled: true },
+      // Use 'auto' to pre-fill from existing customer data (don't ask again)
+      billing_address_collection: customerId ? 'auto' : 'required',
+      // Only ask for phone if we don't have it
+      phone_number_collection: { enabled: !customerData?.phone },
+      tax_id_collection: { enabled: !customerData?.vatId },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       metadata: {
         planSlug: planSlug || 'custom',
