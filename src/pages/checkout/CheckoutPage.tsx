@@ -72,11 +72,20 @@ export const CheckoutPage = () => {
   // Determine if we should hide address fields (SEPA will ask for them in Stripe)
   const hideAddressFields = paymentMethod === 'sepa_debit';
 
-  // Determine if this is a custom checkout (from quick link generator)
+  // Determine if this is a custom checkout (from quick link generator or with custom params)
   const isCustomCheckout = planSlug === 'custom' && customPrice;
+  const hasCustomParams = customPrice !== null || billingInterval !== null;
 
   // Get base plan or create custom plan
   const basePlan = planSlug && planSlug !== 'custom' ? getPlanBySlug(planSlug) : null;
+
+  // Determine effective period based on billing interval parameter
+  const getEffectivePeriod = (): 'monthly' | 'annual' => {
+    if (billingInterval) {
+      return billingInterval === 'annual' ? 'annual' : 'monthly';
+    }
+    return basePlan?.period || 'monthly';
+  };
 
   // Build effective plan
   const effectivePlan: Plan | null = isCustomCheckout
@@ -86,7 +95,7 @@ export const CheckoutPage = () => {
           ? `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'} — ${customDescription}`
           : `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'}`,
         price: customPrice,
-        period: billingInterval === 'annual' ? 'annual' : 'monthly',
+        period: getEffectivePeriod(),
         features: [
           'Acceso completo a la plataforma',
           'Analítica avanzada de ventas',
@@ -100,7 +109,14 @@ export const CheckoutPage = () => {
       ? {
           ...basePlan,
           price: customPrice ?? basePlan.price,
-          name: customDescription ? `${basePlan.name} — ${customDescription}` : basePlan.name,
+          name: hasCustomParams && customDescription 
+            ? `Suscripción ${INTERVAL_LABELS[billingInterval || basePlan.period] || basePlan.name} — ${customDescription}`
+            : hasCustomParams && billingInterval
+              ? `Suscripción ${INTERVAL_LABELS[billingInterval]}`
+              : customDescription 
+                ? `${basePlan.name} — ${customDescription}` 
+                : basePlan.name,
+          period: getEffectivePeriod(),
         }
       : null;
 
