@@ -14,7 +14,7 @@ export const plans: Plan[] = [
   {
     planSlug: 'mensual',
     name: 'Mensual',
-    price: 125,
+    price: 1,
     period: 'monthly',
     features: [
       'Acceso completo a la plataforma',
