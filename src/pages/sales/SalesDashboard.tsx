@@ -6,6 +6,7 @@ import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
 import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
 import { BankTransferManager } from '@/components/sales/BankTransferManager';
+import { ProformaGenerator } from '@/components/sales/ProformaGenerator';
 import { ActivityTable } from '@/components/sales/ActivityTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import {
   Activity,
   Building2,
   Landmark,
+  Link as LinkIcon,
 } from 'lucide-react';
 import winerimIcon from '@/assets/winerim-icon.png';
 
@@ -182,17 +184,35 @@ export const SalesDashboard = () => {
                   </p>
                 ) : (
                   filteredCustomers.map((customer) => (
-                    <button
+                    <div
                       key={customer.id}
-                      onClick={() => handleSelectCustomer(customer)}
-                      className="w-full text-left p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/30 transition-all group"
+                      className="p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-muted/30 transition-all group"
                     >
-                      <p className="font-medium text-foreground group-hover:text-primary transition-colors">
-                        {customer.companyName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{customer.email}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{customer.vatId}</p>
-                    </button>
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          onClick={() => handleSelectCustomer(customer)}
+                          className="flex-1 text-left"
+                        >
+                          <p className="font-medium text-foreground group-hover:text-primary transition-colors">
+                            {customer.companyName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{customer.email}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{customer.vatId}</p>
+                        </button>
+                      </div>
+                      <div className="flex gap-2 mt-2 pt-2 border-t border-border/50">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 h-7 text-xs"
+                          onClick={() => handleSelectCustomer(customer)}
+                        >
+                          <LinkIcon className="w-3 h-3 mr-1" />
+                          Link pago
+                        </Button>
+                        <ProformaGenerator customer={customer} />
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
