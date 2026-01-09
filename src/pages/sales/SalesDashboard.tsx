@@ -17,6 +17,7 @@ import {
   Activity,
   Building2,
 } from 'lucide-react';
+import winerimIcon from '@/assets/winerim-icon.png';
 
 export const SalesDashboard = () => {
   const navigate = useNavigate();
@@ -69,9 +70,11 @@ export const SalesDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg gradient-wine flex items-center justify-center">
-                <span className="text-white font-display font-bold text-lg">W</span>
-              </div>
+              <img 
+                src={winerimIcon} 
+                alt="Winerim" 
+                className="w-9 h-9 object-contain"
+              />
               <div>
                 <span className="font-display font-semibold text-foreground">
                   {appConfig.brandName}
