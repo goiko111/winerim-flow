@@ -268,8 +268,14 @@ serve(async (req) => {
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      // Use 'auto' only if we have a customer with complete address, otherwise require it
-      billing_address_collection: (customerId && hasCompleteAddress) ? 'auto' : 'required',
+      // Always set to 'auto' - address is already set on the customer object
+      // Stripe will use the customer's saved address and only show it for confirmation
+      billing_address_collection: 'auto',
+      // Tell Stripe to use and update customer's saved address for the payment method
+      customer_update: {
+        address: 'auto',
+        name: 'auto',
+      },
       // Only ask for phone if we don't have it
       phone_number_collection: { enabled: !customerData?.phone },
       tax_id_collection: { enabled: !customerData?.vatId },
