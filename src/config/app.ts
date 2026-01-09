@@ -7,6 +7,7 @@ export const appConfig = {
   // Contact
   supportEmail: 'soporte@winerim.com',
   salesEmail: 'ventas@winerim.com',
+  supportPhone: '685739010',
   
   // Legal URLs
   termsUrl: '/legal/condiciones',
