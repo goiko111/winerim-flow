@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Lock, User } from 'lucide-react';
+import winerimIcon from '@/assets/winerim-icon.png';
 
 // Mock credentials - in production, use proper auth
 const MOCK_CREDENTIALS = {
@@ -49,9 +50,11 @@ export const SalesLogin = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl gradient-wine flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-display font-bold text-3xl">W</span>
-          </div>
+          <img 
+            src={winerimIcon} 
+            alt="Winerim" 
+            className="w-16 h-16 mx-auto mb-4"
+          />
           <h1 className="font-display text-2xl font-semibold text-foreground">
             Portal Comercial
           </h1>
