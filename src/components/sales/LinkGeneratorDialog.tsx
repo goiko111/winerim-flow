@@ -82,39 +82,33 @@ export const LinkGeneratorDialog = ({
     setIsGenerating(true);
     await new Promise((r) => setTimeout(r, 500));
 
-    // Generate prefilled checkout link
-    const prefillData = {
-      companyName: customer.companyName,
-      vatId: customer.vatId,
-      email: customer.email,
-      phone: customer.phone,
-      country: customer.country,
-      state: customer.state,
-      city: customer.city,
-      postalCode: customer.postalCode,
-      address: customer.address,
-    };
-
+    // Generate prefilled checkout link with individual params (shorter URL)
     const baseUrl = window.location.origin;
-    let checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}?prefill=${encodeURIComponent(
-      JSON.stringify(prefillData)
-    )}`;
-
-    // Add payment methods
-    checkoutUrl += `&methods=${selectedPaymentMethods.join(',')}`;
-
-    // Add billing interval if custom
-    if (useCustomPrice) {
-      checkoutUrl += `&interval=${billingInterval}`;
-    }
-
-    // Add custom pricing params if enabled
+    const params = new URLSearchParams();
+    
+    // Customer data as individual params
+    if (customer.companyName) params.set('cn', customer.companyName);
+    if (customer.vatId) params.set('vat', customer.vatId);
+    if (customer.email) params.set('email', customer.email);
+    if (customer.phone) params.set('phone', customer.phone);
+    if (customer.country) params.set('country', customer.country);
+    if (customer.city) params.set('city', customer.city);
+    if (customer.postalCode) params.set('pc', customer.postalCode);
+    if (customer.address) params.set('addr', customer.address);
+    
+    // Payment methods
+    params.set('methods', selectedPaymentMethods.join(','));
+    
+    // Custom pricing
     if (useCustomPrice && customPrice) {
-      checkoutUrl += `&customPrice=${encodeURIComponent(customPrice)}`;
+      params.set('price', customPrice);
+      params.set('interval', billingInterval);
       if (customDescription) {
-        checkoutUrl += `&customDesc=${encodeURIComponent(customDescription)}`;
+        params.set('desc', customDescription);
       }
     }
+    
+    const checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}?${params.toString()}`;
 
     setGeneratedLink(checkoutUrl);
 

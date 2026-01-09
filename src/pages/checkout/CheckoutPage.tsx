@@ -25,20 +25,38 @@ export const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Parse URL parameters first (needed for initial state)
-  const customPrice = searchParams.get('customPrice') 
-    ? parseFloat(searchParams.get('customPrice')!) 
-    : null;
-  const customDescription = searchParams.get('customDesc') 
-    ? decodeURIComponent(searchParams.get('customDesc')!) 
-    : null;
+  // Parse URL parameters (support both old and new format)
+  const customPrice = searchParams.get('price') 
+    ? parseFloat(searchParams.get('price')!) 
+    : searchParams.get('customPrice')
+      ? parseFloat(searchParams.get('customPrice')!)
+      : null;
+  const customDescription = searchParams.get('desc') 
+    ? decodeURIComponent(searchParams.get('desc')!) 
+    : searchParams.get('customDesc')
+      ? decodeURIComponent(searchParams.get('customDesc')!)
+      : null;
   const billingInterval = searchParams.get('interval') || null;
   const allowedMethods = searchParams.get('methods')?.split(',') || null;
 
-  // Parse prefill data from URL
+  // Parse prefill data from URL (support both old JSON format and new individual params)
   const prefillData = searchParams.get('prefill')
     ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
-    : undefined;
+    : {
+        companyName: searchParams.get('cn') || undefined,
+        vatId: searchParams.get('vat') || undefined,
+        email: searchParams.get('email') || undefined,
+        phone: searchParams.get('phone') || undefined,
+        country: searchParams.get('country') || undefined,
+        city: searchParams.get('city') || undefined,
+        postalCode: searchParams.get('pc') || undefined,
+        address: searchParams.get('addr') || undefined,
+      };
+  
+  // Clean undefined values from prefillData
+  const cleanedPrefillData = Object.fromEntries(
+    Object.entries(prefillData).filter(([_, v]) => v !== undefined)
+  );
   
   // Default to card unless URL specifies only sepa_debit
   const initialPaymentMethod = allowedMethods?.length === 1 && allowedMethods[0] === 'sepa_debit' 
@@ -239,7 +257,7 @@ export const CheckoutPage = () => {
               <CompanyForm 
                 onSubmit={handleFormSubmit}
                 onFormChange={handleFormChange}
-                defaultValues={prefillData}
+                defaultValues={Object.keys(cleanedPrefillData).length > 0 ? cleanedPrefillData : undefined}
                 isSubmitting={isSubmitting}
                 hideAddressFields={hideAddressFields}
               />
