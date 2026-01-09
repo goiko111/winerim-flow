@@ -192,10 +192,10 @@ const Index = () => {
               </span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href={appConfig.termsUrl} className="hover:text-foreground transition-colors">
+              <a href={appConfig.termsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 Condiciones
               </a>
-              <a href={appConfig.privacyUrl} className="hover:text-foreground transition-colors">
+              <a href={appConfig.privacyUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 Privacidad
               </a>
               <a
