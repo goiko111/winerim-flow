@@ -5,9 +5,11 @@ import { Customer, getCustomers, getActivityLogs, ActivityLog } from '@/lib/sale
 import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
 import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
+import { BankTransferManager } from '@/components/sales/BankTransferManager';
 import { ActivityTable } from '@/components/sales/ActivityTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   UserPlus,
   FileText,
@@ -16,6 +18,7 @@ import {
   Users,
   Activity,
   Building2,
+  Landmark,
 } from 'lucide-react';
 import winerimIcon from '@/assets/winerim-icon.png';
 
@@ -196,15 +199,30 @@ export const SalesDashboard = () => {
             </div>
           </div>
 
-          {/* Activity section */}
+          {/* Activity & Bank Transfers section */}
           <div className="lg:col-span-2">
             <div className="card-elevated p-6">
-              <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-6">
-                <Activity className="w-5 h-5 text-primary" />
-                Actividad reciente
-              </h2>
-
-              <ActivityTable logs={activityLogs} onRefresh={loadData} />
+              <Tabs defaultValue="activity" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="activity" className="flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Actividad reciente
+                  </TabsTrigger>
+                  <TabsTrigger value="transfers" className="flex items-center gap-2">
+                    <Landmark className="w-4 h-4" />
+                    Transferencias
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="activity">
+                  <ActivityTable logs={activityLogs} onRefresh={loadData} />
+                </TabsContent>
+                <TabsContent value="transfers">
+                  <BankTransferManager 
+                    customers={customers} 
+                    currentUser={localStorage.getItem('winerim_sales_user') || 'comercial'} 
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
