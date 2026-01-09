@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { plans, Plan } from '@/config/plans';
-import { appConfig, PaymentMethod } from '@/config/app';
+import { appConfig } from '@/config/app';
 import { Customer, ActivityLog, saveActivityLog, generateId } from '@/lib/salesStore';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
-import { Copy, Mail, ExternalLink, Check, FileText, Euro } from 'lucide-react';
+import { Copy, Mail, ExternalLink, Check, FileText, Euro, CreditCard, Building2, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { BILLING_INTERVALS } from '@/config/bankDetails';
+
+type PaymentMethodOption = 'card' | 'sepa_debit' | 'bank_transfer';
+
+const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard }[] = [
+  { value: 'card', label: 'Tarjeta', icon: CreditCard },
+  { value: 'sepa_debit', label: 'SEPA (Domiciliación)', icon: Building2 },
+  { value: 'bank_transfer', label: 'Transferencia bancaria', icon: Landmark },
+];
 
 interface LinkGeneratorDialogProps {
   open: boolean;
@@ -38,7 +47,8 @@ export const LinkGeneratorDialog = ({
 }: LinkGeneratorDialogProps) => {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string>('anual');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<PaymentMethodOption[]>(['card', 'sepa_debit']);
+  const [billingInterval, setBillingInterval] = useState<string>('monthly');
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -49,9 +59,15 @@ export const LinkGeneratorDialog = ({
 
   const plan = plans.find((p) => p.planSlug === selectedPlan);
 
-  const showBankTransfer =
-    appConfig.stripe.enableBankTransferForAnnual &&
-    (plan?.period === 'annual' || selectedPlan === 'enterprise');
+  const togglePaymentMethod = (method: PaymentMethodOption) => {
+    setSelectedPaymentMethods(prev => {
+      if (prev.includes(method)) {
+        if (prev.length === 1) return prev;
+        return prev.filter(m => m !== method);
+      }
+      return [...prev, method];
+    });
+  };
 
   const getFinalPrice = () => {
     if (useCustomPrice && customPrice) {
@@ -84,6 +100,14 @@ export const LinkGeneratorDialog = ({
       JSON.stringify(prefillData)
     )}`;
 
+    // Add payment methods
+    checkoutUrl += `&methods=${selectedPaymentMethods.join(',')}`;
+
+    // Add billing interval if custom
+    if (useCustomPrice) {
+      checkoutUrl += `&interval=${billingInterval}`;
+    }
+
     // Add custom pricing params if enabled
     if (useCustomPrice && customPrice) {
       checkoutUrl += `&customPrice=${encodeURIComponent(customPrice)}`;
@@ -104,7 +128,7 @@ export const LinkGeneratorDialog = ({
       planSlug: plan.planSlug,
       planName: useCustomPrice ? `${plan.name} (Personalizado: ${customPrice}€)` : plan.name,
       action: 'link_created',
-      paymentMethod,
+      paymentMethod: selectedPaymentMethods.join(', '),
       link: checkoutUrl,
     };
     saveActivityLog(log);
@@ -167,11 +191,14 @@ El equipo de Winerim`);
   const resetState = () => {
     setGeneratedLink(null);
     setSelectedPlan('anual');
-    setPaymentMethod('card');
+    setSelectedPaymentMethods(['card', 'sepa_debit']);
+    setBillingInterval('monthly');
     setUseCustomPrice(false);
     setCustomPrice('');
     setCustomDescription('');
   };
+
+  const canGenerate = selectedPaymentMethods.length > 0 && (!useCustomPrice || customPrice);
 
   return (
     <Dialog
@@ -269,17 +296,59 @@ El equipo de Winerim`);
                   <span className="text-lg font-semibold text-primary">{getFinalPrice()}€</span>
                 </div>
 
-                {/* Payment method */}
-                <PaymentMethodSelector
-                  value={paymentMethod}
-                  onChange={setPaymentMethod}
-                  showBankTransfer={showBankTransfer}
-                />
+                {/* Payment methods - multi-select */}
+                <div className="space-y-3">
+                  <Label>Métodos de pago permitidos *</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PAYMENT_METHODS.map((method) => {
+                      const Icon = method.icon;
+                      const isSelected = selectedPaymentMethods.includes(method.value);
+                      return (
+                        <label
+                          key={method.value}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                            isSelected 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-border hover:border-primary/30'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => togglePaymentMethod(method.value)}
+                          />
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className={`text-sm ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                            {method.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Billing interval for custom pricing */}
+                {useCustomPrice && (
+                  <div>
+                    <Label>Periodicidad de cobro</Label>
+                    <Select value={billingInterval} onValueChange={setBillingInterval}>
+                      <SelectTrigger className="input-premium mt-1.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BILLING_INTERVALS.map((interval) => (
+                          <SelectItem key={interval.value} value={interval.value}>
+                            {interval.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <Button
                   onClick={handleGenerateLink}
                   className="btn-wine w-full"
-                  disabled={isGenerating || (useCustomPrice && !customPrice)}
+                  disabled={isGenerating || !canGenerate}
                 >
                   {isGenerating ? 'Generando...' : 'Generar enlace de pago'}
                 </Button>
