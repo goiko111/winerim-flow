@@ -63,8 +63,8 @@ export const CheckoutCancel = () => {
                   {appConfig.supportEmail}
                 </a>{' '}
                 o llámanos al{' '}
-                <a href="tel:+34944000000" className="text-primary hover:underline">
-                  +34 944 00 00 00
+                <a href={`tel:+34${appConfig.supportPhone}`} className="text-primary hover:underline">
+                  +34 {appConfig.supportPhone}
                 </a>
               </p>
             </div>
