@@ -258,6 +258,9 @@ serve(async (req) => {
     // Create checkout session
     const origin = req.headers.get("origin") || "https://winerim.com";
     
+    // Check if we have complete customer address data
+    const hasCompleteAddress = customerData?.address && customerData?.city && customerData?.postalCode && customerData?.country;
+    
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
@@ -265,12 +268,31 @@ serve(async (req) => {
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      // Use 'auto' to pre-fill from existing customer data (don't ask again)
-      billing_address_collection: customerId ? 'auto' : 'required',
+      // Use 'auto' only if we have a customer with complete address, otherwise require it
+      billing_address_collection: (customerId && hasCompleteAddress) ? 'auto' : 'required',
       // Only ask for phone if we don't have it
       phone_number_collection: { enabled: !customerData?.phone },
       tax_id_collection: { enabled: !customerData?.vatId },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+      // Add subscription metadata
+      subscription_data: {
+        metadata: {
+          planSlug: planSlug || 'custom',
+          billingInterval: intervalKey,
+          customPrice: finalPrice.toString(),
+          customDescription: customDescription || '',
+          paymentMethods: (paymentMethods || []).join(','),
+          companyName: customerData?.companyName || '',
+          restaurantName: customerData?.restaurantName || '',
+          vatId: customerData?.vatId || '',
+          phone: customerData?.phone || '',
+          address: customerData?.address || '',
+          city: customerData?.city || '',
+          postalCode: customerData?.postalCode || '',
+          country: customerData?.country || '',
+          source: 'winerim_sales_portal',
+        },
+      },
       metadata: {
         planSlug: planSlug || 'custom',
         billingInterval: intervalKey,
@@ -281,6 +303,10 @@ serve(async (req) => {
         restaurantName: customerData?.restaurantName || '',
         vatId: customerData?.vatId || '',
         phone: customerData?.phone || '',
+        address: customerData?.address || '',
+        city: customerData?.city || '',
+        postalCode: customerData?.postalCode || '',
+        country: customerData?.country || '',
         source: 'winerim_sales_portal',
       },
     };
