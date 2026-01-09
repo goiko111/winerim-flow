@@ -117,6 +117,26 @@ export const CheckoutPage = () => {
     setIsFormValid(true);
   };
 
+  const sendErrorNotification = async (context: string, error: unknown, data?: CompanyFormData) => {
+    try {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      await supabase.functions.invoke('send-payment-notification', {
+        body: {
+          isError: true,
+          errorMessage,
+          errorContext: context,
+          customerEmail: data?.email || formData?.email || '',
+          restaurantName: data?.restaurantName || formData?.restaurantName || '',
+          companyName: data?.companyName || formData?.companyName || '',
+          planName: customDescription || effectivePlan.planSlug || '',
+        },
+      });
+      console.log('Error notification sent');
+    } catch (notifyError) {
+      console.error('Failed to send error notification:', notifyError);
+    }
+  };
+
   const handlePaymentClick = async () => {
     // Check terms first
     if (!termsAccepted) {
@@ -162,6 +182,7 @@ export const CheckoutPage = () => {
 
       if (error) {
         console.error('Edge function error:', error);
+        await sendErrorNotification('Error al crear sesión de Stripe Checkout', error, formData);
         throw new Error(error.message || 'Error al crear la sesión de pago');
       }
 
@@ -171,7 +192,9 @@ export const CheckoutPage = () => {
         setIsSubmitting(false);
         toast.success('Se ha abierto la pasarela de pago en una nueva pestaña');
       } else {
-        throw new Error('No se recibió la URL de pago');
+        const noUrlError = new Error('No se recibió la URL de pago');
+        await sendErrorNotification('Stripe no devolvió URL de checkout', noUrlError, formData);
+        throw noUrlError;
       }
     } catch (error) {
       console.error('Payment error:', error);

@@ -48,7 +48,7 @@ export const CheckoutSuccess = () => {
         'annual': 'Anual',
       };
 
-      await supabase.functions.invoke('send-payment-notification', {
+      const response = await supabase.functions.invoke('send-payment-notification', {
         body: {
           sessionId,
           customerEmail: data.email || '',
@@ -62,9 +62,36 @@ export const CheckoutSuccess = () => {
           billingInterval: intervalLabels[data.billingInterval || 'monthly'] || 'Mensual',
         },
       });
+      
+      if (response.error) {
+        throw new Error(response.error.message || 'Error enviando notificación');
+      }
+      
       console.log('Payment notification sent successfully');
     } catch (error) {
       console.error('Failed to send payment notification:', error);
+      // Send error notification
+      await sendErrorNotification('Error al enviar notificación de pago exitoso', error, data);
+    }
+  };
+
+  const sendErrorNotification = async (context: string, error: unknown, data?: CheckoutData) => {
+    try {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      await supabase.functions.invoke('send-payment-notification', {
+        body: {
+          isError: true,
+          errorMessage,
+          errorContext: context,
+          customerEmail: data?.email || '',
+          restaurantName: data?.restaurantName || '',
+          companyName: data?.companyName || '',
+          planName: data?.customDescription || data?.planSlug || '',
+        },
+      });
+      console.log('Error notification sent');
+    } catch (notifyError) {
+      console.error('Failed to send error notification:', notifyError);
     }
   };
 
