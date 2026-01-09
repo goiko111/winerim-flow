@@ -4,6 +4,7 @@ import { plans } from '@/config/plans';
 import { Check, ArrowRight, Wine, TrendingUp, Users, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import winerimLogo from '@/assets/winerim-icon.png';
 
 const Index = () => {
   const benefits = [
@@ -36,9 +37,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg gradient-wine flex items-center justify-center">
-                <span className="text-white font-display font-bold text-lg">W</span>
-              </div>
+              <img src={winerimLogo} alt={appConfig.brandName} className="h-8 w-auto" />
               <span className="font-display text-xl font-semibold text-foreground">
                 {appConfig.brandName}
               </span>
@@ -186,9 +185,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded gradient-wine flex items-center justify-center">
-                <span className="text-white font-display font-bold text-sm">W</span>
-              </div>
+              <img src={winerimLogo} alt={appConfig.brandName} className="h-6 w-auto" />
               <span className="text-sm text-muted-foreground">
                 {appConfig.companyLegalName}
               </span>
