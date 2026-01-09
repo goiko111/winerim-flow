@@ -23,19 +23,28 @@ export const CheckoutSuccess = () => {
   const notificationSentRef = useRef(false);
 
   useEffect(() => {
+    // Skip if already sent notification
+    if (notificationSentRef.current) return;
+    
     const stored = localStorage.getItem('winerim_checkout_data');
-    if (stored) {
+    const sessionId = searchParams.get('session_id');
+    
+    if (stored && sessionId) {
       const data = JSON.parse(stored);
       setCheckoutData(data);
-      // Clean up after reading
-      localStorage.removeItem('winerim_checkout_data');
-
-      // Send payment notification email (only once)
-      const sessionId = searchParams.get('session_id');
-      if (sessionId && !notificationSentRef.current) {
-        notificationSentRef.current = true;
-        sendPaymentNotification(sessionId, data);
-      }
+      
+      // Mark as sent BEFORE making the call to prevent duplicates
+      notificationSentRef.current = true;
+      
+      // Send payment notification email
+      sendPaymentNotification(sessionId, data).finally(() => {
+        // Only clean up localStorage after notification attempt completes
+        localStorage.removeItem('winerim_checkout_data');
+      });
+    } else if (stored) {
+      // If we have data but no session_id, still show the data
+      const data = JSON.parse(stored);
+      setCheckoutData(data);
     }
   }, [searchParams]);
 
