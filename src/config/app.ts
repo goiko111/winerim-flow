@@ -10,8 +10,8 @@ export const appConfig = {
   supportPhone: '685739010',
   
   // Legal URLs
-  termsUrl: '/legal/condiciones',
-  privacyUrl: '/legal/privacidad',
+  termsUrl: 'https://winerim.wine/terminos-y-condiciones-del-contrato/',
+  privacyUrl: 'https://winerim.wine/politica-privacidad/',
   
   // Integration mode: 'payment-link' | 'checkout-session'
   integrationMode: 'payment-link' as const,
