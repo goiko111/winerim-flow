@@ -280,6 +280,10 @@ serve(async (req) => {
       phone_number_collection: { enabled: !customerData?.phone },
       tax_id_collection: { enabled: !customerData?.vatId },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+      // Require terms acceptance in Stripe Checkout
+      consent_collection: {
+        terms_of_service: 'required',
+      },
       // Add subscription metadata
       subscription_data: {
         metadata: {

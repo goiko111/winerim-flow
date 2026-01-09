@@ -1,5 +1,6 @@
 import { appConfig } from '@/config/app';
 import { Link } from 'react-router-dom';
+import winerimIcon from '@/assets/winerim-icon.png';
 
 export const CheckoutHeader = () => {
   return (
@@ -8,9 +9,11 @@ export const CheckoutHeader = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-wine flex items-center justify-center">
-              <span className="text-white font-display font-bold text-lg">W</span>
-            </div>
+            <img 
+              src={winerimIcon} 
+              alt="Winerim" 
+              className="w-9 h-9 object-contain"
+            />
             <span className="font-display text-xl font-semibold text-foreground">
               {appConfig.brandName}
             </span>
