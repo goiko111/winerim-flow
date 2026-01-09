@@ -24,15 +24,8 @@ export const CheckoutPage = () => {
   const { planSlug } = useParams<{ planSlug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [termsError, setTermsError] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CompanyFormData | null>(null);
-  const [isFormValid, setIsFormValid] = useState(false);
 
-  // Parse URL parameters
+  // Parse URL parameters first (needed for initial state)
   const customPrice = searchParams.get('customPrice') 
     ? parseFloat(searchParams.get('customPrice')!) 
     : null;
@@ -46,6 +39,20 @@ export const CheckoutPage = () => {
   const prefillData = searchParams.get('prefill')
     ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
     : undefined;
+  
+  // Default to card unless URL specifies only sepa_debit
+  const initialPaymentMethod = allowedMethods?.length === 1 && allowedMethods[0] === 'sepa_debit' 
+    ? 'sepa_debit' as PaymentMethod 
+    : 'card' as PaymentMethod;
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialPaymentMethod);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<CompanyFormData | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
+  
+  // Determine if we should hide address fields (SEPA will ask for them in Stripe)
+  const hideAddressFields = paymentMethod === 'sepa_debit';
 
   // Determine if this is a custom checkout (from quick link generator)
   const isCustomCheckout = planSlug === 'custom' && customPrice;
@@ -196,13 +203,7 @@ export const CheckoutPage = () => {
             </div>
 
             <div className="card-elevated p-6 sm:p-8 space-y-8">
-              <CompanyForm 
-                onSubmit={handleFormSubmit}
-                onFormChange={handleFormChange}
-                defaultValues={prefillData}
-                isSubmitting={isSubmitting}
-              />
-
+              {/* Payment method selector FIRST */}
               {showPaymentSelector && (
                 <PaymentMethodSelector
                   value={paymentMethod}
@@ -210,6 +211,15 @@ export const CheckoutPage = () => {
                   showBankTransfer={showBankTransfer}
                 />
               )}
+
+              {/* Company form - will show/hide address based on payment method */}
+              <CompanyForm 
+                onSubmit={handleFormSubmit}
+                onFormChange={handleFormChange}
+                defaultValues={prefillData}
+                isSubmitting={isSubmitting}
+                hideAddressFields={hideAddressFields}
+              />
 
               <TermsCheckbox
                 checked={termsAccepted}
