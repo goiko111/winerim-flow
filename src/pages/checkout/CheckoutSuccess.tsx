@@ -142,7 +142,7 @@ export const CheckoutSuccess = () => {
                 <div>
                   <p className="font-medium text-foreground">Revisa tu email</p>
                   <p className="text-sm text-muted-foreground">
-                    Te hemos enviado un email a {checkoutData?.email || 'tu dirección'} con las instrucciones de acceso.
+                    Te enviaremos en breve un email con las instrucciones de acceso.
                   </p>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export const CheckoutSuccess = () => {
                 <div>
                   <p className="font-medium text-foreground">Onboarding personalizado</p>
                   <p className="text-sm text-muted-foreground">
-                    Nuestro equipo se pondrá en contacto contigo en las próximas 24 horas para programar tu sesión de bienvenida.
+                    Nuestro equipo se pondrá en contacto contigo en las próximas 24/48 horas para programar tu sesión de bienvenida.
                   </p>
                 </div>
               </div>
