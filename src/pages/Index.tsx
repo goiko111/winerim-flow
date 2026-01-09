@@ -77,7 +77,7 @@ const Index = () => {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
-              <a href="https://wa.me/34685739010" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
                 Hablar con ventas
               </a>
             </Button>
