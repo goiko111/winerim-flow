@@ -69,14 +69,15 @@ const Index = () => {
             tu carta de vinos en una máquina de generar margen.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild className="btn-wine text-base h-12 px-8">
-              <Link to="/checkout/professional">
-                Empezar ahora
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
+            <Button 
+              className="btn-wine text-base h-12 px-8"
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Empezar ahora
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
-              <a href={`mailto:${appConfig.salesEmail}`}>
+              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
                 Hablar con ventas
               </a>
             </Button>
@@ -107,7 +108,7 @@ const Index = () => {
       </section>
 
       {/* Pricing */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
