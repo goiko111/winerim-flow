@@ -1,27 +1,72 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Mail, Calendar } from 'lucide-react';
 import { appConfig } from '@/config/app';
 import { CheckoutHeader } from '@/components/checkout/CheckoutHeader';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutData {
   companyName?: string;
+  restaurantName?: string;
   email?: string;
   planSlug?: string;
+  customPrice?: number;
+  customDescription?: string;
+  billingInterval?: string;
+  paymentMethod?: string;
 }
 
 export const CheckoutSuccess = () => {
+  const [searchParams] = useSearchParams();
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const notificationSentRef = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('winerim_checkout_data');
     if (stored) {
-      setCheckoutData(JSON.parse(stored));
+      const data = JSON.parse(stored);
+      setCheckoutData(data);
       // Clean up after reading
       localStorage.removeItem('winerim_checkout_data');
+
+      // Send payment notification email (only once)
+      const sessionId = searchParams.get('session_id');
+      if (sessionId && !notificationSentRef.current) {
+        notificationSentRef.current = true;
+        sendPaymentNotification(sessionId, data);
+      }
     }
-  }, []);
+  }, [searchParams]);
+
+  const sendPaymentNotification = async (sessionId: string, data: CheckoutData) => {
+    try {
+      const intervalLabels: Record<string, string> = {
+        'monthly': 'Mensual',
+        'quarterly': 'Trimestral',
+        'semestral': 'Semestral',
+        'annual': 'Anual',
+      };
+
+      await supabase.functions.invoke('send-payment-notification', {
+        body: {
+          sessionId,
+          customerEmail: data.email || '',
+          customerName: data.companyName || '',
+          restaurantName: data.restaurantName || '',
+          companyName: data.companyName || '',
+          planName: data.customDescription || data.planSlug || 'Suscripción Winerim',
+          amount: data.customPrice || 0,
+          currency: 'eur',
+          paymentMethod: data.paymentMethod || 'card',
+          billingInterval: intervalLabels[data.billingInterval || 'monthly'] || 'Mensual',
+        },
+      });
+      console.log('Payment notification sent successfully');
+    } catch (error) {
+      console.error('Failed to send payment notification:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
