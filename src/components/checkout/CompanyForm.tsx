@@ -13,20 +13,40 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const companyFormSchema = z.object({
+// Base schema without address fields
+const baseCompanyFormSchema = z.object({
   companyName: z.string().min(2, 'El nombre de la empresa es obligatorio'),
   restaurantName: z.string().min(2, 'El nombre del restaurante es obligatorio'),
   vatId: z.string().min(5, 'CIF/NIF/VAT es obligatorio'),
   email: z.string().email('Email inválido'),
   phone: z.string().min(9, 'Teléfono es obligatorio'),
+  promoCode: z.string().optional(),
+  onboardingNotes: z.string().optional(),
+});
+
+// Address fields schema
+const addressFieldsSchema = z.object({
   country: z.string().min(2, 'País es obligatorio'),
   state: z.string().min(2, 'Provincia/Estado es obligatorio'),
   city: z.string().min(2, 'Ciudad es obligatoria'),
   postalCode: z.string().min(4, 'Código postal es obligatorio'),
   address: z.string().min(5, 'Dirección es obligatoria'),
-  promoCode: z.string().optional(),
-  onboardingNotes: z.string().optional(),
 });
+
+// Optional address fields schema (for SEPA)
+const optionalAddressFieldsSchema = z.object({
+  country: z.string().optional(),
+  state: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  address: z.string().optional(),
+});
+
+// Full schema with required address
+const companyFormSchema = baseCompanyFormSchema.merge(addressFieldsSchema);
+
+// Schema without required address (for SEPA)
+const companyFormSchemaWithoutAddress = baseCompanyFormSchema.merge(optionalAddressFieldsSchema);
 
 export type CompanyFormData = z.infer<typeof companyFormSchema>;
 
@@ -38,6 +58,7 @@ interface CompanyFormProps {
   onFormChange?: (data: Partial<CompanyFormData>, isValid: boolean) => void;
   defaultValues?: Partial<CompanyFormData>;
   isSubmitting?: boolean;
+  hideAddressFields?: boolean;
 }
 
 const countries = [
@@ -52,7 +73,10 @@ const countries = [
   { code: 'IE', name: 'Irlanda' },
 ];
 
-export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting }: CompanyFormProps) => {
+export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting, hideAddressFields = false }: CompanyFormProps) => {
+  // Use appropriate schema based on whether address fields are hidden
+  const schema = hideAddressFields ? companyFormSchemaWithoutAddress : companyFormSchema;
+  
   const {
     register,
     handleSubmit,
@@ -60,7 +84,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
     watch,
     formState: { errors, isValid },
   } = useForm<CompanyFormData>({
-    resolver: zodResolver(companyFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       country: 'ES',
       ...defaultValues,
@@ -152,86 +176,97 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
         </div>
       </div>
 
-      {/* Billing address */}
-      <div className="space-y-4">
-        <p className="section-header">Dirección de facturación</p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="country">País *</Label>
-            <Select
-              value={selectedCountry}
-              onValueChange={(value) => setValue('country', value)}
-            >
-              <SelectTrigger className="input-premium mt-1.5">
-                <SelectValue placeholder="Selecciona país" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.code} value={country.code}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.country && (
-              <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
-            )}
-          </div>
+      {/* Billing address - hidden for SEPA as Stripe will collect it */}
+      {!hideAddressFields && (
+        <div className="space-y-4">
+          <p className="section-header">Dirección de facturación</p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="country">País *</Label>
+              <Select
+                value={selectedCountry}
+                onValueChange={(value) => setValue('country', value)}
+              >
+                <SelectTrigger className="input-premium mt-1.5">
+                  <SelectValue placeholder="Selecciona país" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.country && (
+                <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
+              )}
+            </div>
 
-          <div>
-            <Label htmlFor="state">Provincia / Estado *</Label>
-            <Input
-              id="state"
-              {...register('state')}
-              className="input-premium mt-1.5"
-              placeholder="Bizkaia"
-            />
-            {errors.state && (
-              <p className="text-sm text-destructive mt-1">{errors.state.message}</p>
-            )}
-          </div>
+            <div>
+              <Label htmlFor="state">Provincia / Estado *</Label>
+              <Input
+                id="state"
+                {...register('state')}
+                className="input-premium mt-1.5"
+                placeholder="Bizkaia"
+              />
+              {errors.state && (
+                <p className="text-sm text-destructive mt-1">{errors.state.message}</p>
+              )}
+            </div>
 
-          <div>
-            <Label htmlFor="city">Ciudad *</Label>
-            <Input
-              id="city"
-              {...register('city')}
-              className="input-premium mt-1.5"
-              placeholder="Bilbao"
-            />
-            {errors.city && (
-              <p className="text-sm text-destructive mt-1">{errors.city.message}</p>
-            )}
-          </div>
+            <div>
+              <Label htmlFor="city">Ciudad *</Label>
+              <Input
+                id="city"
+                {...register('city')}
+                className="input-premium mt-1.5"
+                placeholder="Bilbao"
+              />
+              {errors.city && (
+                <p className="text-sm text-destructive mt-1">{errors.city.message}</p>
+              )}
+            </div>
 
-          <div>
-            <Label htmlFor="postalCode">Código postal *</Label>
-            <Input
-              id="postalCode"
-              {...register('postalCode')}
-              className="input-premium mt-1.5"
-              placeholder="48001"
-            />
-            {errors.postalCode && (
-              <p className="text-sm text-destructive mt-1">{errors.postalCode.message}</p>
-            )}
-          </div>
+            <div>
+              <Label htmlFor="postalCode">Código postal *</Label>
+              <Input
+                id="postalCode"
+                {...register('postalCode')}
+                className="input-premium mt-1.5"
+                placeholder="48001"
+              />
+              {errors.postalCode && (
+                <p className="text-sm text-destructive mt-1">{errors.postalCode.message}</p>
+              )}
+            </div>
 
-          <div className="sm:col-span-2">
-            <Label htmlFor="address">Dirección *</Label>
-            <Input
-              id="address"
-              {...register('address')}
-              className="input-premium mt-1.5"
-              placeholder="Calle Gran Vía, 45"
-            />
-            {errors.address && (
-              <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
-            )}
+            <div className="sm:col-span-2">
+              <Label htmlFor="address">Dirección *</Label>
+              <Input
+                id="address"
+                {...register('address')}
+                className="input-premium mt-1.5"
+                placeholder="Calle Gran Vía, 45"
+              />
+              {errors.address && (
+                <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+      
+      {/* Info message when address is hidden (SEPA) */}
+      {hideAddressFields && (
+        <div className="rounded-lg bg-muted/50 border border-border p-4">
+          <p className="text-sm text-muted-foreground">
+            La dirección de facturación se solicitará en el siguiente paso como parte del mandato SEPA.
+          </p>
+        </div>
+      )}
 
       {/* Optional fields */}
       <div className="space-y-4">
