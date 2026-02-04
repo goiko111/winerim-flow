@@ -136,6 +136,149 @@ export type Database = {
           },
         ]
       }
+      stripe_international_payment_requests: {
+        Row: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string
+          currency: string
+          due_date: string
+          id: string
+          paid_at: string | null
+          proforma_number: string
+          sent_at: string | null
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string
+          currency?: string
+          due_date: string
+          id?: string
+          paid_at?: string | null
+          proforma_number: string
+          sent_at?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string
+          currency?: string
+          due_date?: string
+          id?: string
+          paid_at?: string | null
+          proforma_number?: string
+          sent_at?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_international_payment_requests_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_international_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_international_subscriptions: {
+        Row: {
+          address: string | null
+          amount: number
+          billing_interval: string
+          city: string | null
+          company_name: string
+          country: string
+          created_at: string
+          created_by: string
+          currency: string
+          customer_name: string
+          description: string | null
+          email: string
+          id: string
+          last_billed_date: string | null
+          next_billing_date: string
+          payment_method: string
+          phone: string | null
+          plan_name: string
+          plan_slug: string
+          postal_code: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          vat_id: string
+        }
+        Insert: {
+          address?: string | null
+          amount: number
+          billing_interval: string
+          city?: string | null
+          company_name: string
+          country?: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          customer_name: string
+          description?: string | null
+          email: string
+          id?: string
+          last_billed_date?: string | null
+          next_billing_date: string
+          payment_method?: string
+          phone?: string | null
+          plan_name: string
+          plan_slug: string
+          postal_code?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          vat_id: string
+        }
+        Update: {
+          address?: string | null
+          amount?: number
+          billing_interval?: string
+          city?: string | null
+          company_name?: string
+          country?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          customer_name?: string
+          description?: string | null
+          email?: string
+          id?: string
+          last_billed_date?: string | null
+          next_billing_date?: string
+          payment_method?: string
+          phone?: string | null
+          plan_name?: string
+          plan_slug?: string
+          postal_code?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          vat_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
