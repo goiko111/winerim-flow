@@ -6,6 +6,7 @@ import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
 import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
 import { BankTransferManager } from '@/components/sales/BankTransferManager';
+import { StripeInternationalManager } from '@/components/sales/StripeInternationalManager';
 import { ProformaGenerator } from '@/components/sales/ProformaGenerator';
 import { ActivityTable } from '@/components/sales/ActivityTable';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
   Activity,
   Building2,
   Landmark,
+  Globe,
   Link as LinkIcon,
 } from 'lucide-react';
 import winerimIcon from '@/assets/winerim-icon.png';
@@ -223,14 +225,18 @@ export const SalesDashboard = () => {
           <div className="lg:col-span-2">
             <div className="card-elevated p-6">
               <Tabs defaultValue="activity" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger value="activity" className="flex items-center gap-2">
                     <Activity className="w-4 h-4" />
-                    Actividad reciente
+                    Actividad
                   </TabsTrigger>
                   <TabsTrigger value="transfers" className="flex items-center gap-2">
                     <Landmark className="w-4 h-4" />
                     Transferencias
+                  </TabsTrigger>
+                  <TabsTrigger value="international" className="flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Internacional
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="activity">
@@ -238,6 +244,12 @@ export const SalesDashboard = () => {
                 </TabsContent>
                 <TabsContent value="transfers">
                   <BankTransferManager 
+                    customers={customers} 
+                    currentUser={localStorage.getItem('winerim_sales_user') || 'comercial'} 
+                  />
+                </TabsContent>
+                <TabsContent value="international">
+                  <StripeInternationalManager 
                     customers={customers} 
                     currentUser={localStorage.getItem('winerim_sales_user') || 'comercial'} 
                   />
