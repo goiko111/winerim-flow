@@ -86,25 +86,25 @@ export const LinkGeneratorDialog = ({
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
     
-    // Customer data as individual params
+    // Customer data as short params
     if (customer.companyName) params.set('cn', customer.companyName);
-    if (customer.vatId) params.set('vat', customer.vatId);
-    if (customer.email) params.set('email', customer.email);
-    if (customer.phone) params.set('phone', customer.phone);
-    if (customer.country) params.set('country', customer.country);
-    if (customer.city) params.set('city', customer.city);
+    if (customer.vatId) params.set('v', customer.vatId);
+    if (customer.email) params.set('e', customer.email);
+    if (customer.phone) params.set('ph', customer.phone);
+    if (customer.country) params.set('co', customer.country);
+    if (customer.city) params.set('ci', customer.city);
     if (customer.postalCode) params.set('pc', customer.postalCode);
-    if (customer.address) params.set('addr', customer.address);
+    if (customer.address) params.set('a', customer.address);
     
     // Payment methods
-    params.set('methods', selectedPaymentMethods.join(','));
+    params.set('m', selectedPaymentMethods.join(','));
     
     // Custom pricing
     if (useCustomPrice && customPrice) {
-      params.set('price', customPrice);
-      params.set('interval', billingInterval);
+      params.set('p', customPrice);
+      params.set('i', billingInterval);
       if (customDescription) {
-        params.set('desc', customDescription);
+        params.set('d', customDescription);
       }
     }
     

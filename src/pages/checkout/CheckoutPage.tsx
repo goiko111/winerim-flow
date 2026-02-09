@@ -26,31 +26,35 @@ export const CheckoutPage = () => {
   const navigate = useNavigate();
 
   // Parse URL parameters (support both old and new format)
-  const customPrice = searchParams.get('price') 
-    ? parseFloat(searchParams.get('price')!) 
-    : searchParams.get('customPrice')
-      ? parseFloat(searchParams.get('customPrice')!)
-      : null;
-  const customDescription = searchParams.get('desc') 
-    ? decodeURIComponent(searchParams.get('desc')!) 
-    : searchParams.get('customDesc')
-      ? decodeURIComponent(searchParams.get('customDesc')!)
-      : null;
-  const billingInterval = searchParams.get('interval') || null;
-  const allowedMethods = searchParams.get('methods')?.split(',') || null;
+  const customPrice = searchParams.get('p')
+    ? parseFloat(searchParams.get('p')!)
+    : searchParams.get('price') 
+      ? parseFloat(searchParams.get('price')!) 
+      : searchParams.get('customPrice')
+        ? parseFloat(searchParams.get('customPrice')!)
+        : null;
+  const customDescription = searchParams.get('d')
+    ? decodeURIComponent(searchParams.get('d')!)
+    : searchParams.get('desc') 
+      ? decodeURIComponent(searchParams.get('desc')!) 
+      : searchParams.get('customDesc')
+        ? decodeURIComponent(searchParams.get('customDesc')!)
+        : null;
+  const billingInterval = searchParams.get('i') || searchParams.get('interval') || null;
+  const allowedMethods = (searchParams.get('m') || searchParams.get('methods'))?.split(',') || null;
 
-  // Parse prefill data from URL (support both old JSON format and new individual params)
+  // Parse prefill data from URL (support short, medium, and legacy params)
   const prefillData = searchParams.get('prefill')
     ? JSON.parse(decodeURIComponent(searchParams.get('prefill')!))
     : {
         companyName: searchParams.get('cn') || undefined,
-        vatId: searchParams.get('vat') || undefined,
-        email: searchParams.get('email') || undefined,
-        phone: searchParams.get('phone') || undefined,
-        country: searchParams.get('country') || undefined,
-        city: searchParams.get('city') || undefined,
+        vatId: searchParams.get('v') || searchParams.get('vat') || undefined,
+        email: searchParams.get('e') || searchParams.get('email') || undefined,
+        phone: searchParams.get('ph') || searchParams.get('phone') || undefined,
+        country: searchParams.get('co') || searchParams.get('country') || undefined,
+        city: searchParams.get('ci') || searchParams.get('city') || undefined,
         postalCode: searchParams.get('pc') || undefined,
-        address: searchParams.get('addr') || undefined,
+        address: searchParams.get('a') || searchParams.get('addr') || undefined,
       };
   
   // Clean undefined values from prefillData
