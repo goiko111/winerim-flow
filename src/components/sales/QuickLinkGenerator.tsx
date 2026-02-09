@@ -66,12 +66,12 @@ export const QuickLinkGenerator = () => {
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
     
-    params.set('customPrice', customPrice);
-    params.set('interval', billingInterval);
-    params.set('methods', selectedPaymentMethods.join(','));
+    params.set('p', customPrice);
+    params.set('i', billingInterval);
+    params.set('m', selectedPaymentMethods.join(','));
     
     if (customDescription) {
-      params.set('customDesc', customDescription);
+      params.set('d', customDescription);
     }
 
     const checkoutUrl = `${baseUrl}/checkout/custom?${params.toString()}`;
