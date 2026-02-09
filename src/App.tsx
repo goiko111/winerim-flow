@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
 import CheckoutCancel from "./pages/checkout/CheckoutCancel";
+import CheckoutRedirect from "./pages/checkout/CheckoutRedirect";
 import SalesLogin from "./pages/sales/SalesLogin";
 import SalesDashboard from "./pages/sales/SalesDashboard";
 
@@ -21,6 +22,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/p/:code" element={<CheckoutRedirect />} />
           <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />

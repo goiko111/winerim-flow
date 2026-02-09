@@ -86,6 +86,66 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_links: {
+        Row: {
+          address: string | null
+          billing_interval: string | null
+          city: string | null
+          code: string
+          company_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string
+          custom_price: number | null
+          description: string | null
+          email: string | null
+          id: string
+          payment_methods: string[]
+          phone: string | null
+          plan_slug: string
+          postal_code: string | null
+          vat_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          billing_interval?: string | null
+          city?: string | null
+          code: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          custom_price?: number | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          payment_methods?: string[]
+          phone?: string | null
+          plan_slug: string
+          postal_code?: string | null
+          vat_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          billing_interval?: string | null
+          city?: string | null
+          code?: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          custom_price?: number | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          payment_methods?: string[]
+          phone?: string | null
+          plan_slug?: string
+          postal_code?: string | null
+          vat_id?: string | null
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           amount: number
@@ -284,7 +344,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_short_code: { Args: { length?: number }; Returns: string }
     }
     Enums: {
       [_ in never]: never
