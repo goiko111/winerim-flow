@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { plans, Plan } from '@/config/plans';
 import { appConfig } from '@/config/app';
 import { Customer, ActivityLog, saveActivityLog, generateId } from '@/lib/salesStore';
+import { createCheckoutLink } from '@/lib/checkoutLinks';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -80,55 +81,51 @@ export const LinkGeneratorDialog = ({
     if (!customer || !plan) return;
 
     setIsGenerating(true);
-    await new Promise((r) => setTimeout(r, 500));
 
-    // Generate prefilled checkout link with individual params (shorter URL)
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-    
-    // Customer data as short params
-    if (customer.companyName) params.set('cn', customer.companyName);
-    if (customer.vatId) params.set('v', customer.vatId);
-    if (customer.email) params.set('e', customer.email);
-    if (customer.phone) params.set('ph', customer.phone);
-    if (customer.country) params.set('co', customer.country);
-    if (customer.city) params.set('ci', customer.city);
-    if (customer.postalCode) params.set('pc', customer.postalCode);
-    if (customer.address) params.set('a', customer.address);
-    
-    // Payment methods
-    params.set('m', selectedPaymentMethods.join(','));
-    
-    // Custom pricing
-    if (useCustomPrice && customPrice) {
-      params.set('p', customPrice);
-      params.set('i', billingInterval);
-      if (customDescription) {
-        params.set('d', customDescription);
-      }
+    try {
+      const result = await createCheckoutLink({
+        planSlug: plan.planSlug,
+        companyName: customer.companyName || undefined,
+        vatId: customer.vatId || undefined,
+        email: customer.email || undefined,
+        phone: customer.phone || undefined,
+        country: customer.country || undefined,
+        city: customer.city || undefined,
+        postalCode: customer.postalCode || undefined,
+        address: customer.address || undefined,
+        customPrice: useCustomPrice && customPrice ? parseFloat(customPrice) : undefined,
+        billingInterval: useCustomPrice ? billingInterval : undefined,
+        paymentMethods: selectedPaymentMethods,
+        description: customDescription || undefined,
+      });
+
+      const checkoutUrl = result.url;
+      setGeneratedLink(checkoutUrl);
+
+      // Log activity
+      const log: ActivityLog = {
+        id: generateId(),
+        date: Date.now(),
+        salesPerson: 'admin',
+        customerId: customer.id,
+        customerName: customer.companyName,
+        planSlug: plan.planSlug,
+        planName: useCustomPrice ? `${plan.name} (Personalizado: ${customPrice}€)` : plan.name,
+        action: 'link_created',
+        paymentMethod: selectedPaymentMethods.join(', '),
+        link: checkoutUrl,
+      };
+      saveActivityLog(log);
+      onLinkGenerated();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo generar el enlace. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
     }
-    
-    const checkoutUrl = `${baseUrl}/checkout/${plan.planSlug}?${params.toString()}`;
-
-    setGeneratedLink(checkoutUrl);
-
-    // Log activity
-    const log: ActivityLog = {
-      id: generateId(),
-      date: Date.now(),
-      salesPerson: 'admin',
-      customerId: customer.id,
-      customerName: customer.companyName,
-      planSlug: plan.planSlug,
-      planName: useCustomPrice ? `${plan.name} (Personalizado: ${customPrice}€)` : plan.name,
-      action: 'link_created',
-      paymentMethod: selectedPaymentMethods.join(', '),
-      link: checkoutUrl,
-    };
-    saveActivityLog(log);
-
-    setIsGenerating(false);
-    onLinkGenerated();
   };
 
   const handleCopyLink = () => {

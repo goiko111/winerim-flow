@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createCheckoutLink } from '@/lib/checkoutLinks';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -60,22 +61,25 @@ export const QuickLinkGenerator = () => {
     });
   };
 
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     if (!customPrice) return;
 
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-    
-    params.set('p', customPrice);
-    params.set('i', billingInterval);
-    params.set('m', selectedPaymentMethods.join(','));
-    
-    if (customDescription) {
-      params.set('d', customDescription);
+    try {
+      const result = await createCheckoutLink({
+        planSlug: 'custom',
+        customPrice: parseFloat(customPrice),
+        billingInterval,
+        paymentMethods: selectedPaymentMethods,
+        description: customDescription || undefined,
+      });
+      setGeneratedLink(result.url);
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo generar el enlace. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
     }
-
-    const checkoutUrl = `${baseUrl}/checkout/custom?${params.toString()}`;
-    setGeneratedLink(checkoutUrl);
   };
 
   const handleCopyLink = () => {
