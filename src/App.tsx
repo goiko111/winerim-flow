@@ -23,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/intl" element={<IntlLanding />} />
           <Route path="/p/:code" element={<CheckoutRedirect />} />
           <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
