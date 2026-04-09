@@ -35,7 +35,6 @@ const BILLING_INTERVALS: { value: BillingInterval; label: string }[] = [
 
 const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard }[] = [
   { value: 'card', label: 'Card', icon: CreditCard },
-  { value: 'sepa_debit', label: 'SEPA Direct Debit', icon: Building2 },
   { value: 'us_bank_account', label: 'ACH (US Bank)', icon: Landmark },
   { value: 'link', label: 'Link (Stripe)', icon: Wallet },
 ];
