@@ -42,6 +42,8 @@ export const CheckoutPage = () => {
         : null;
   const billingInterval = searchParams.get('i') || searchParams.get('interval') || null;
   const allowedMethods = (searchParams.get('m') || searchParams.get('methods'))?.split(',') || null;
+  const isIntl = searchParams.get('intl') === '1';
+  const intlCurrency = searchParams.get('currency') || 'EUR';
 
   // Parse prefill data from URL (support short, medium, and legacy params)
   const prefillData = searchParams.get('prefill')
@@ -205,17 +207,24 @@ export const CheckoutPage = () => {
       }));
 
       // Create Checkout Session via Edge Function
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          planSlug: effectivePlan.planSlug,
-          customPrice: customPrice || effectivePlan.price,
-          customDescription: customDescription,
-          billingInterval: billingInterval || (effectivePlan.period === 'annual' ? 'annual' : 'monthly'),
-          paymentMethods: [paymentMethod],
-          customerData: formData,
-          successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/checkout/cancel`,
-        },
+      const edgeFn = isIntl ? 'create-checkout-intl' : 'create-checkout';
+      const bodyPayload: Record<string, unknown> = {
+        planSlug: effectivePlan.planSlug,
+        customPrice: customPrice || effectivePlan.price,
+        customDescription: customDescription,
+        billingInterval: billingInterval || (effectivePlan.period === 'annual' ? 'annual' : 'monthly'),
+        paymentMethods: [paymentMethod],
+        customerData: formData,
+        successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/checkout/cancel`,
+      };
+      if (isIntl) {
+        bodyPayload.price = customPrice || effectivePlan.price;
+        bodyPayload.currency = intlCurrency;
+        bodyPayload.description = customDescription || undefined;
+      }
+      const { data, error } = await supabase.functions.invoke(edgeFn, {
+        body: bodyPayload,
       });
 
       if (error) {
