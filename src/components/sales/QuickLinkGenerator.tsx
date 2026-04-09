@@ -103,7 +103,9 @@ export const QuickLinkGenerator = () => {
     setCopied(false);
   };
 
-  const canGenerate = customPrice && parseFloat(customPrice) > 0 && selectedPaymentMethods.length > 0;
+  const priceNum = parseFloat(customPrice);
+  const isBelowMinimum = customPrice !== '' && !isNaN(priceNum) && priceNum > 0 && priceNum < 0.5;
+  const canGenerate = customPrice && priceNum >= 0.5 && selectedPaymentMethods.length > 0;
 
   const intervalLabel = BILLING_INTERVALS.find(i => i.value === billingInterval)?.label || '';
 
