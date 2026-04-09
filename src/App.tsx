@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import DomainRouter from "./components/DomainRouter";
 import IntlLanding from "./pages/IntlLanding";
 import NotFound from "./pages/NotFound";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
@@ -22,7 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<DomainRouter />} />
           <Route path="/intl" element={<IntlLanding />} />
           <Route path="/p/:code" element={<CheckoutRedirect />} />
           <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
@@ -30,6 +31,8 @@ const App = () => (
           <Route path="/checkout/cancel" element={<CheckoutCancel />} />
           <Route path="/sales/login" element={<SalesLogin />} />
           <Route path="/sales/dashboard" element={<SalesDashboard />} />
+          <Route path="/portalcomercial" element={<SalesLogin />} />
+          <Route path="/comercialportal" element={<SalesLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

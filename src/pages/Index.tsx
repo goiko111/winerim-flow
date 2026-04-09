@@ -37,18 +37,6 @@ const Index = () => {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <Link
-                to="/intl"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                International
-              </Link>
-              <Link
-                to="/sales/login"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Portal Comercial
-              </Link>
             </div>
           </div>
         </div>
