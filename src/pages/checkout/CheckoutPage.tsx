@@ -70,7 +70,6 @@ export const CheckoutPage = () => {
     : allowedMethods?.length === 1 && allowedMethods[0] === 'us_bank_account'
       ? 'us_bank_account' as PaymentMethod
       : 'card' as PaymentMethod;
-    : 'card' as PaymentMethod;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialPaymentMethod);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
