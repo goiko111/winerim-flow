@@ -657,13 +657,49 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => fetchPaymentHistory(sub.id)}
-                  >
-                    Ver historial
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => fetchPaymentHistory(sub.id)}
+                    >
+                      Ver historial
+                    </Button>
+                    {generatedLinks[sub.id] ? (
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleCopyLink(sub.id)}
+                        >
+                          <Copy className="w-4 h-4 mr-1" />
+                          Copiar link
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(generatedLinks[sub.id], '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Abrir
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleGenerateCheckoutLink(sub)}
+                        disabled={generatingLinkId === sub.id || sub.status !== 'active'}
+                      >
+                        {generatingLinkId === sub.id ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Link className="w-4 h-4 mr-1" />
+                        )}
+                        Generar link de pago
+                      </Button>
+                    )}
+                  </div>
                   <Button 
                     size="sm"
                     onClick={() => handleSendPaymentRequest(sub.id)}
