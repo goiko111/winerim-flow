@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import BillingToggle from '@/components/BillingToggle';
 import winerimLogo from '@/assets/winerim-icon.png';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 const currencySymbol: Record<IntlCurrency, string> = { EUR: '€', USD: '$' };
 
@@ -15,7 +16,12 @@ const IntlLanding = () => {
   const [currency, setCurrency] = useState<IntlCurrency>('EUR');
   const [isAnnual, setIsAnnual] = useState(true);
 
+  const { convertToUsd } = useExchangeRate();
   const t = i18n[lang];
+
+  const getPrice = (eurPrice: number): number => {
+    return currency === 'USD' ? convertToUsd(eurPrice) : eurPrice;
+  };
 
   const benefits = [
     { icon: Wine, title: t.benefitSell, description: t.benefitSellDesc },
