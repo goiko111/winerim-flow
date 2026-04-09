@@ -167,7 +167,7 @@ const IntlLanding = () => {
               onChange={setIsAnnual}
               monthlyLabel={t.monthly}
               annualLabel={t.annual}
-              annualBadge={`${sym}${Math.round(annualPlan.price[currency] / 12)}${t.perMonth}`}
+              annualBadge={`${sym}${Math.round(getPrice(annualPlan.price.EUR) / 12)}${t.perMonth}`}
             />
           </div>
 
@@ -176,7 +176,7 @@ const IntlLanding = () => {
             displayedPlans.length === 1 ? 'max-w-md' : 'grid-cols-1 md:grid-cols-2 max-w-3xl'
           )}>
             {displayedPlans.map((plan) => {
-              const price = plan.price[currency];
+              const price = getPrice(plan.price.EUR);
               const monthlyEquiv = plan.period === 'annual'
                 ? Math.round(price / (plan.planSlug === 'biannual' ? 6 : 12))
                 : null;
