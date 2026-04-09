@@ -35,10 +35,12 @@ import {
   AlertCircle,
   Globe,
   Banknote,
+  ExternalLink,
+  Copy,
+  Link,
 } from 'lucide-react';
 import { BILLING_INTERVALS, getIntervalLabel } from '@/config/bankDetails';
 import { Customer } from '@/lib/salesStore';
-
 interface StripeIntlSubscription {
   id: string;
   customer_name: string;
@@ -124,6 +126,8 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
   const [subscriptions, setSubscriptions] = useState<StripeIntlSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [generatingLinkId, setGeneratingLinkId] = useState<string | null>(null);
+  const [generatedLinks, setGeneratedLinks] = useState<Record<string, string>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPayments, setSelectedPayments] = useState<Record<string, StripeIntlPaymentRequest[]>>({});
   
@@ -313,6 +317,52 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
     } catch (error: any) {
       console.error('Error marking as paid:', error);
       toast.error('Error al actualizar');
+    }
+  };
+
+  const handleGenerateCheckoutLink = async (sub: StripeIntlSubscription) => {
+    setGeneratingLinkId(sub.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-intl', {
+        body: {
+          price: Number(sub.amount),
+          currency: sub.currency,
+          billingInterval: sub.billing_interval,
+          paymentMethods: [sub.payment_method],
+          description: sub.description || sub.plan_name,
+          customerData: {
+            email: sub.email,
+            companyName: sub.company_name,
+            customerName: sub.customer_name,
+            vatId: sub.vat_id,
+            phone: sub.phone,
+            address: sub.address,
+            city: sub.city,
+            postalCode: sub.postal_code,
+            country: sub.country,
+          },
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const url = data.sessionUrl;
+      setGeneratedLinks(prev => ({ ...prev, [sub.id]: url }));
+      toast.success('Enlace de checkout generado');
+    } catch (err: any) {
+      console.error('Error generating checkout link:', err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setGeneratingLinkId(null);
+    }
+  };
+
+  const handleCopyLink = (subId: string) => {
+    const link = generatedLinks[subId];
+    if (link) {
+      navigator.clipboard.writeText(link);
+      toast.success('Enlace copiado al portapapeles');
     }
   };
 
@@ -607,13 +657,49 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => fetchPaymentHistory(sub.id)}
-                  >
-                    Ver historial
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => fetchPaymentHistory(sub.id)}
+                    >
+                      Ver historial
+                    </Button>
+                    {generatedLinks[sub.id] ? (
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleCopyLink(sub.id)}
+                        >
+                          <Copy className="w-4 h-4 mr-1" />
+                          Copiar link
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(generatedLinks[sub.id], '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Abrir
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleGenerateCheckoutLink(sub)}
+                        disabled={generatingLinkId === sub.id || sub.status !== 'active'}
+                      >
+                        {generatingLinkId === sub.id ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Link className="w-4 h-4 mr-1" />
+                        )}
+                        Generar link de pago
+                      </Button>
+                    )}
+                  </div>
                   <Button 
                     size="sm"
                     onClick={() => handleSendPaymentRequest(sub.id)}
