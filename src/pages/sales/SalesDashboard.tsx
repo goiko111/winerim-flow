@@ -93,6 +93,7 @@ export const SalesDashboard = () => {
 
             <div className="flex items-center gap-2">
               <QuickLinkGenerator />
+              <QuickLinkIntlGenerator />
               <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground">
                 <LogOut className="w-4 h-4 mr-2" />
                 Salir
