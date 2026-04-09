@@ -152,9 +152,11 @@ export const QuickLinkGenerator = () => {
                     autoFocus
                   />
                 </div>
+                {isBelowMinimum && (
+                  <p className="text-xs text-destructive mt-1">Importe mínimo: 0,50€ (requisito de Stripe)</p>
+                )}
               </div>
 
-              {/* Billing interval */}
               <div>
                 <Label>Periodicidad de cobro *</Label>
                 <Select value={billingInterval} onValueChange={(v) => setBillingInterval(v as BillingInterval)}>

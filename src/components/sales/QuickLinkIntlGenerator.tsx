@@ -161,8 +161,11 @@ export const QuickLinkIntlGenerator = () => {
                       className="input-premium pl-9"
                       autoFocus
                     />
-                  </div>
+                  {isBelowMinimum && (
+                    <p className="text-xs text-destructive mt-1">Min. amount: 0.50 (Stripe requirement)</p>
+                  )}
                 </div>
+              </div>
                 <div>
                   <Label>Currency</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
