@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import BillingToggle from '@/components/BillingToggle';
 import winerimLogo from '@/assets/winerim-icon.png';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 const currencySymbol: Record<IntlCurrency, string> = { EUR: '€', USD: '$' };
 
@@ -15,7 +16,12 @@ const IntlLanding = () => {
   const [currency, setCurrency] = useState<IntlCurrency>('EUR');
   const [isAnnual, setIsAnnual] = useState(true);
 
+  const { convertToUsd } = useExchangeRate();
   const t = i18n[lang];
+
+  const getPrice = (eurPrice: number): number => {
+    return currency === 'USD' ? convertToUsd(eurPrice) : eurPrice;
+  };
 
   const benefits = [
     { icon: Wine, title: t.benefitSell, description: t.benefitSellDesc },
@@ -161,7 +167,7 @@ const IntlLanding = () => {
               onChange={setIsAnnual}
               monthlyLabel={t.monthly}
               annualLabel={t.annual}
-              annualBadge={`${sym}${Math.round(annualPlan.price[currency] / 12)}${t.perMonth}`}
+              annualBadge={`${sym}${Math.round(getPrice(annualPlan.price.EUR) / 12)}${t.perMonth}`}
             />
           </div>
 
@@ -170,7 +176,7 @@ const IntlLanding = () => {
             displayedPlans.length === 1 ? 'max-w-md' : 'grid-cols-1 md:grid-cols-2 max-w-3xl'
           )}>
             {displayedPlans.map((plan) => {
-              const price = plan.price[currency];
+              const price = getPrice(plan.price.EUR);
               const monthlyEquiv = plan.period === 'annual'
                 ? Math.round(price / (plan.planSlug === 'biannual' ? 6 : 12))
                 : null;
