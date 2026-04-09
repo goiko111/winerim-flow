@@ -320,6 +320,52 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
     }
   };
 
+  const handleGenerateCheckoutLink = async (sub: StripeIntlSubscription) => {
+    setGeneratingLinkId(sub.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-intl', {
+        body: {
+          price: Number(sub.amount),
+          currency: sub.currency,
+          billingInterval: sub.billing_interval,
+          paymentMethods: [sub.payment_method],
+          description: sub.description || sub.plan_name,
+          customerData: {
+            email: sub.email,
+            companyName: sub.company_name,
+            customerName: sub.customer_name,
+            vatId: sub.vat_id,
+            phone: sub.phone,
+            address: sub.address,
+            city: sub.city,
+            postalCode: sub.postal_code,
+            country: sub.country,
+          },
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const url = data.sessionUrl;
+      setGeneratedLinks(prev => ({ ...prev, [sub.id]: url }));
+      toast.success('Enlace de checkout generado');
+    } catch (err: any) {
+      console.error('Error generating checkout link:', err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setGeneratingLinkId(null);
+    }
+  };
+
+  const handleCopyLink = (subId: string) => {
+    const link = generatedLinks[subId];
+    if (link) {
+      navigator.clipboard.writeText(link);
+      toast.success('Enlace copiado al portapapeles');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: any }> = {
       active: { variant: 'default', icon: CheckCircle },
