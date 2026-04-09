@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getCheckoutLink } from '@/lib/checkoutLinks';
 import { Loader2 } from 'lucide-react';
 
 const CheckoutRedirect = () => {
   const { code } = useParams<{ code: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
 
@@ -35,9 +36,17 @@ const CheckoutRedirect = () => {
       if (data.billingInterval) params.set('i', data.billingInterval);
       if (data.description) params.set('d', data.description);
 
+      // Forward intl params from the original URL
+      const intl = searchParams.get('intl');
+      const currency = searchParams.get('currency');
+      const lang = searchParams.get('lang');
+      if (intl) params.set('intl', intl);
+      if (currency) params.set('currency', currency);
+      if (lang) params.set('lang', lang);
+
       navigate(`/checkout/${data.planSlug}?${params.toString()}`, { replace: true });
     });
-  }, [code, navigate]);
+  }, [code, navigate, searchParams]);
 
   if (error) {
     return (
