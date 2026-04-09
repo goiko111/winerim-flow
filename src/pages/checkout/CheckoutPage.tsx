@@ -211,7 +211,7 @@ export const CheckoutPage = () => {
           customPrice: customPrice || effectivePlan.price,
           customDescription: customDescription,
           billingInterval: billingInterval || (effectivePlan.period === 'annual' ? 'annual' : 'monthly'),
-          paymentMethods: allowedMethods || [paymentMethod],
+          paymentMethods: [paymentMethod],
           customerData: formData,
           successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/checkout/cancel`,
