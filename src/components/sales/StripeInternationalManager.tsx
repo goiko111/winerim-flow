@@ -126,6 +126,8 @@ export const StripeInternationalManager = ({ customers, currentUser }: StripeInt
   const [subscriptions, setSubscriptions] = useState<StripeIntlSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [generatingLinkId, setGeneratingLinkId] = useState<string | null>(null);
+  const [generatedLinks, setGeneratedLinks] = useState<Record<string, string>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPayments, setSelectedPayments] = useState<Record<string, StripeIntlPaymentRequest[]>>({});
   
