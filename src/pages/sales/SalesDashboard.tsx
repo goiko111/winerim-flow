@@ -5,6 +5,7 @@ import { Customer, getCustomers, getActivityLogs, ActivityLog } from '@/lib/sale
 import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
 import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
+import { QuickLinkIntlGenerator } from '@/components/sales/QuickLinkIntlGenerator';
 import { BankTransferManager } from '@/components/sales/BankTransferManager';
 import { StripeInternationalManager } from '@/components/sales/StripeInternationalManager';
 import { ProformaGenerator } from '@/components/sales/ProformaGenerator';
