@@ -119,7 +119,9 @@ export const QuickLinkIntlGenerator = () => {
     setCopied(false);
   };
 
-  const canGenerate = customPrice && parseFloat(customPrice) > 0 && selectedPaymentMethods.length > 0;
+  const priceNumVal = parseFloat(customPrice);
+  const isBelowMinimum = customPrice !== '' && !isNaN(priceNumVal) && priceNumVal > 0 && priceNumVal < 0.5;
+  const canGenerate = customPrice && priceNumVal >= 0.5 && selectedPaymentMethods.length > 0;
   const intervalLabel = BILLING_INTERVALS.find(i => i.value === billingInterval)?.label || '';
 
   return (
@@ -159,8 +161,11 @@ export const QuickLinkIntlGenerator = () => {
                       className="input-premium pl-9"
                       autoFocus
                     />
-                  </div>
+                  {isBelowMinimum && (
+                    <p className="text-xs text-destructive mt-1">Min. amount: 0.50 (Stripe requirement)</p>
+                  )}
                 </div>
+              </div>
                 <div>
                   <Label>Currency</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
