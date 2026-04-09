@@ -1,7 +1,7 @@
 export interface IntlPlan {
   planSlug: string;
   name: Record<string, string>;
-  price: { EUR: number; USD: number };
+  price: { EUR: number };
   period: 'monthly' | 'annual';
   features: Record<string, string[]>;
   savings?: Record<string, string>;
@@ -12,7 +12,7 @@ export const intlPlans: IntlPlan[] = [
   {
     planSlug: 'monthly',
     name: { en: 'Monthly', es: 'Mensual', it: 'Mensile' },
-    price: { EUR: 149, USD: 149 },
+    price: { EUR: 149 },
     period: 'monthly',
     features: {
       en: [
@@ -44,7 +44,7 @@ export const intlPlans: IntlPlan[] = [
   {
     planSlug: 'biannual',
     name: { en: 'Biannual', es: 'Semestral', it: 'Semestrale' },
-    price: { EUR: 795, USD: 795 },
+    price: { EUR: 795 },
     period: 'annual',
     features: {
       en: [
@@ -71,7 +71,7 @@ export const intlPlans: IntlPlan[] = [
   {
     planSlug: 'annual',
     name: { en: 'Annual', es: 'Anual', it: 'Annuale' },
-    price: { EUR: 1199, USD: 1199 },
+    price: { EUR: 1199 },
     period: 'annual',
     features: {
       en: [
