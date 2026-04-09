@@ -5,6 +5,7 @@ import { Customer, getCustomers, getActivityLogs, ActivityLog } from '@/lib/sale
 import { CustomerFormDialog } from '@/components/sales/CustomerFormDialog';
 import { LinkGeneratorDialog } from '@/components/sales/LinkGeneratorDialog';
 import { QuickLinkGenerator } from '@/components/sales/QuickLinkGenerator';
+import { QuickLinkIntlGenerator } from '@/components/sales/QuickLinkIntlGenerator';
 import { BankTransferManager } from '@/components/sales/BankTransferManager';
 import { StripeInternationalManager } from '@/components/sales/StripeInternationalManager';
 import { ProformaGenerator } from '@/components/sales/ProformaGenerator';
@@ -92,6 +93,7 @@ export const SalesDashboard = () => {
 
             <div className="flex items-center gap-2">
               <QuickLinkGenerator />
+              <QuickLinkIntlGenerator />
               <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground">
                 <LogOut className="w-4 h-4 mr-2" />
                 Salir
