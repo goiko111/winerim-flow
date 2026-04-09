@@ -34,4 +34,4 @@ export const appConfig = {
 };
 
 export type IntegrationMode = typeof appConfig.integrationMode;
-export type PaymentMethod = typeof appConfig.stripe.paymentMethods[number] | 'bank_transfer';
+export type PaymentMethod = typeof appConfig.stripe.paymentMethods[number] | 'bank_transfer' | 'us_bank_account';
