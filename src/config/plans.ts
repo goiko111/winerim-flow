@@ -14,7 +14,7 @@ export const plans: Plan[] = [
   {
     planSlug: 'mensual',
     name: 'Mensual',
-    price: 1,
+    price: 149,
     period: 'monthly',
     features: [
       'Acceso completo a la plataforma',
@@ -30,26 +30,26 @@ export const plans: Plan[] = [
   {
     planSlug: 'semestral',
     name: 'Semestral',
-    price: 645,
+    price: 795,
     period: 'annual',
     features: [
       'Todo lo del plan Mensual',
-      'Ahorra 105€ (14% descuento)',
+      'Ahorra 99€ (11% descuento)',
       'Onboarding personalizado',
       'Consultoría trimestral',
     ],
     stripePaymentLinkUrl: 'https://buy.stripe.com/PLACEHOLDER_SEMESTRAL',
     stripePriceId: 'price_semestral',
-    savings: 'Ahorra 105€',
+    savings: 'Ahorra 99€',
   },
   {
     planSlug: 'anual',
     name: 'Anual',
-    price: 990,
+    price: 1199,
     period: 'annual',
     features: [
       'Todo lo del plan Mensual',
-      'Ahorra 510€ (34% descuento)',
+      'Ahorra 589€ (33% descuento)',
       'Onboarding personalizado',
       'Consultoría trimestral',
       'Acceso anticipado a novedades',
@@ -57,7 +57,7 @@ export const plans: Plan[] = [
     ],
     stripePaymentLinkUrl: 'https://buy.stripe.com/PLACEHOLDER_ANUAL',
     stripePriceId: 'price_anual',
-    savings: 'Ahorra 510€',
+    savings: 'Ahorra 589€',
     highlight: true,
   },
 ];
