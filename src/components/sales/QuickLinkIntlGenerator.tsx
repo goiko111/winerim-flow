@@ -19,11 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, Link2, DollarSign, Euro, Globe, CreditCard, Building2, Landmark, Wallet } from 'lucide-react';
+import { Copy, Check, Link2, DollarSign, Euro, Globe, CreditCard, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type BillingInterval = 'monthly' | 'quarterly' | 'semestral' | 'annual';
-type PaymentMethodOption = 'card' | 'sepa_debit' | 'bank_transfer' | 'us_bank_account' | 'link';
+type PaymentMethodOption = 'card' | 'us_bank_account';
 type Currency = 'EUR' | 'USD';
 
 const BILLING_INTERVALS: { value: BillingInterval; label: string }[] = [
@@ -36,7 +36,6 @@ const BILLING_INTERVALS: { value: BillingInterval; label: string }[] = [
 const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard }[] = [
   { value: 'card', label: 'Card', icon: CreditCard },
   { value: 'us_bank_account', label: 'ACH (US Bank)', icon: Landmark },
-  { value: 'link', label: 'Link (Stripe)', icon: Wallet },
 ];
 
 export const QuickLinkIntlGenerator = () => {

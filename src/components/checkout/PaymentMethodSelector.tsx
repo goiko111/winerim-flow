@@ -7,10 +7,11 @@ interface PaymentMethodSelectorProps {
   value: PaymentMethod;
   onChange: (method: PaymentMethod) => void;
   showBankTransfer?: boolean;
+  isIntl?: boolean;
   className?: string;
 }
 
-const paymentMethods = [
+const nationalMethods = [
   {
     id: 'card' as PaymentMethod,
     name: 'Tarjeta de crédito/débito',
@@ -34,15 +35,34 @@ const paymentMethods = [
   },
 ];
 
+const intlMethods = [
+  {
+    id: 'card' as PaymentMethod,
+    name: 'Credit/Debit Card',
+    description: 'Visa, Mastercard, American Express',
+    icon: CreditCard,
+    note: null,
+  },
+  {
+    id: 'us_bank_account' as PaymentMethod,
+    name: 'ACH Direct Debit (US Bank)',
+    description: 'Direct debit from US bank account',
+    icon: Landmark,
+    note: 'ACH confirmation may take 2-4 business days.',
+  },
+];
+
 export const PaymentMethodSelector = ({
   value,
   onChange,
   showBankTransfer = false,
+  isIntl = false,
   className,
 }: PaymentMethodSelectorProps) => {
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
 
-  const availableMethods = paymentMethods.filter(
+  const baseMethods = isIntl ? intlMethods : nationalMethods;
+  const availableMethods = baseMethods.filter(
     (method) => method.id !== 'bank_transfer' || showBankTransfer
   );
 
