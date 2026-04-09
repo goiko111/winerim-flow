@@ -35,10 +35,12 @@ import {
   AlertCircle,
   Globe,
   Banknote,
+  ExternalLink,
+  Copy,
+  Link,
 } from 'lucide-react';
 import { BILLING_INTERVALS, getIntervalLabel } from '@/config/bankDetails';
 import { Customer } from '@/lib/salesStore';
-
 interface StripeIntlSubscription {
   id: string;
   customer_name: string;
