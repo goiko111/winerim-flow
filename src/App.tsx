@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import IntlLanding from "./pages/IntlLanding";
 import NotFound from "./pages/NotFound";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/intl" element={<IntlLanding />} />
           <Route path="/p/:code" element={<CheckoutRedirect />} />
           <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
