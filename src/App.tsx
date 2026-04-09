@@ -23,7 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<DomainRouter />} />
           <Route path="/intl" element={<IntlLanding />} />
           <Route path="/p/:code" element={<CheckoutRedirect />} />
           <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
