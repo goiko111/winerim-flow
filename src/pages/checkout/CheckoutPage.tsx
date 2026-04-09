@@ -64,9 +64,12 @@ export const CheckoutPage = () => {
     Object.entries(prefillData).filter(([_, v]) => v !== undefined)
   );
   
-  // Default to card unless URL specifies only sepa_debit
+  // Default to card; for intl with only us_bank_account, default to that
   const initialPaymentMethod = allowedMethods?.length === 1 && allowedMethods[0] === 'sepa_debit' 
     ? 'sepa_debit' as PaymentMethod 
+    : allowedMethods?.length === 1 && allowedMethods[0] === 'us_bank_account'
+      ? 'us_bank_account' as PaymentMethod
+      : 'card' as PaymentMethod;
     : 'card' as PaymentMethod;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialPaymentMethod);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -279,6 +282,7 @@ export const CheckoutPage = () => {
                   value={paymentMethod}
                   onChange={setPaymentMethod}
                   showBankTransfer={showBankTransfer}
+                  isIntl={isIntl}
                 />
               )}
 
