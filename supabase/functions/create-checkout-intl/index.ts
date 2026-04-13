@@ -113,9 +113,17 @@ serve(async (req) => {
     }];
 
     // Payment methods
-    const validMethods = (paymentMethods || ['card']).filter((m: string) =>
+    const currencyLower = (currency || 'USD').toLowerCase();
+    const allMethods = (paymentMethods || ['card']).filter((m: string) =>
       ['card', 'sepa_debit', 'us_bank_account', 'link'].includes(m)
     );
+    // Filter methods incompatible with currency
+    const validMethods = allMethods.filter((m: string) => {
+      if (m === 'us_bank_account' && currencyLower !== 'usd') return false;
+      if (m === 'sepa_debit' && currencyLower !== 'eur') return false;
+      return true;
+    });
+    if (validMethods.length === 0) validMethods.push('card');
 
     const origin = req.headers.get("origin") || "https://winerim.com";
 
