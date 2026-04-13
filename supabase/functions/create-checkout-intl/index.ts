@@ -172,6 +172,22 @@ serve(async (req) => {
       },
     };
 
+    // If customer_balance is included, configure bank transfer funding
+    if (validMethods.includes('customer_balance')) {
+      sessionParams.payment_method_options = {
+        customer_balance: {
+          funding_type: 'bank_transfer',
+          bank_transfer: {
+            type: currencyLower === 'eur' ? 'eu_bank_transfer' :
+                  currencyLower === 'gbp' ? 'gb_bank_transfer' :
+                  currencyLower === 'mxn' ? 'mx_bank_transfer' :
+                  'us_bank_transfer',
+            ...(currencyLower === 'eur' ? { eu_bank_transfer: { country: 'DE' } } : {}),
+          },
+        },
+      };
+    }
+
     logStep("Creating checkout session", { paymentMethods: validMethods, currency });
     const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Session created", { sessionId: session.id, url: session.url });
