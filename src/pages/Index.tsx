@@ -67,11 +67,11 @@ const Index = () => {
               Empezar ahora
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
-              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
-                Hablar con ventas
-              </a>
-            </Button>
+<Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
+  <a href="https://wa.me/34614453106" target="_blank" rel="noopener noreferrer">
+    Hablar con ventas
+  </a>
+</Button>
           </div>
         </div>
       </section>
@@ -210,11 +210,11 @@ const Index = () => {
               Ver planes y empezar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
-              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
-                Hablar con un asesor
-              </a>
-            </Button>
+<Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
+  <a href="https://wa.me/34614453106" target="_blank" rel="noopener noreferrer">
+    Hablar con un asesor
+  </a>
+</Button>
           </div>
         </div>
       </section>
