@@ -76,30 +76,11 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats */}
-      <StatsBar />
-
-      {/* Problem */}
-      <ProblemSection />
-
-      {/* Product / 5 tools */}
-      <ProductSection />
-
-      {/* All features */}
-      <AllFeaturesSection
-        title="Todo incluido en cada plan"
-        subtitle="Sin módulos extra ni costes ocultos. Acceso completo desde el primer día."
-        features={allPlanFeatures}
-      />
-
-      {/* Testimonials */}
-      <TestimonialsSection />
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
+      {/* Pricing - MOVED UP */}
+      <section id="pricing" className="py-16 px-4 sm:px-6 lg:px-8 bg-secondary/30">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <p className="section-header text-primary">Precios</p>
+            <p className="section-header text-primary mb-2">Precios</p>
             <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
               Planes diseñados para hostelería
             </h2>
@@ -187,11 +168,31 @@ const Index = () => {
           {/* Guarantee */}
           <div className="mt-10 text-center">
             <p className="text-sm text-muted-foreground">
-              🔒 Pago seguro · Sin permanencia · Cancela cuando quieras
+              Pago seguro · Sin permanencia · Cancela cuando quieras
             </p>
           </div>
         </div>
       </section>
+
+      {/* Stats */}
+      <StatsBar />
+
+      {/* Problem */}
+      <ProblemSection />
+
+      {/* Product / 5 tools */}
+      <ProductSection />
+
+      {/* All features */}
+      <AllFeaturesSection
+        title="Todo incluido en cada plan"
+        subtitle="Sin módulos extra ni costes ocultos. Acceso completo desde el primer día."
+        features={allPlanFeatures}
+      />
+
+      {/* Testimonials */}
+      <TestimonialsSection />
+
 
       {/* Final CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
