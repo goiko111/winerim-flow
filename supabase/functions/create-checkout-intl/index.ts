@@ -57,13 +57,14 @@ serve(async (req) => {
       ? `${intervalConfig.label} Subscription — ${description}`
       : `${intervalConfig.label} Subscription — Winerim`;
 
-    // Find or create customer
+    // Find or create customer — handle multi-currency by checking existing subscriptions
     let customerId: string | undefined;
     const customerEmail = customerData?.email;
+    const targetCurrency = (currency || 'USD').toLowerCase();
 
     if (customerEmail) {
       logStep("Looking up customer", { email: customerEmail });
-      const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
+      const existing = await stripe.customers.list({ email: customerEmail, limit: 100 });
 
       const customerParams = {
         email: customerEmail,
@@ -79,17 +80,36 @@ serve(async (req) => {
           companyName: customerData.companyName || '',
           vatId: customerData.vatId || '',
           source: 'winerim_intl_portal',
+          currency: targetCurrency,
         },
       };
 
-      if (existing.data.length > 0) {
-        customerId = existing.data[0].id;
+      // Find a customer compatible with this currency (no active subs in another currency)
+      let compatibleCustomer: string | undefined;
+      for (const cust of existing.data) {
+        const subs = await stripe.subscriptions.list({ customer: cust.id, limit: 10 });
+        const activeSubs = subs.data.filter(s => ['active', 'trialing', 'past_due', 'incomplete'].includes(s.status));
+        if (activeSubs.length === 0) {
+          // No active subs — safe to reuse
+          compatibleCustomer = cust.id;
+          break;
+        }
+        const sameCurrency = activeSubs.every(s => s.currency === targetCurrency);
+        if (sameCurrency) {
+          compatibleCustomer = cust.id;
+          break;
+        }
+      }
+
+      if (compatibleCustomer) {
+        customerId = compatibleCustomer;
         await stripe.customers.update(customerId, customerParams);
-        logStep("Updated existing customer", { customerId });
+        logStep("Using compatible customer", { customerId, targetCurrency });
       } else {
+        // Create a new customer for this currency
         const newCustomer = await stripe.customers.create(customerParams);
         customerId = newCustomer.id;
-        logStep("Created new customer", { customerId });
+        logStep("Created new customer for currency", { customerId, targetCurrency });
       }
     }
 
