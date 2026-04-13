@@ -23,7 +23,7 @@ import { Copy, Check, Link2, DollarSign, Euro, Globe, CreditCard, Landmark } fro
 import { useToast } from '@/hooks/use-toast';
 
 type BillingInterval = 'monthly' | 'quarterly' | 'semestral' | 'annual';
-type PaymentMethodOption = 'card' | 'us_bank_account';
+type PaymentMethodOption = 'card' | 'us_bank_account' | 'customer_balance';
 type Currency = 'EUR' | 'USD';
 
 const BILLING_INTERVALS: { value: BillingInterval; label: string }[] = [
@@ -33,9 +33,10 @@ const BILLING_INTERVALS: { value: BillingInterval; label: string }[] = [
   { value: 'annual', label: 'Annual' },
 ];
 
-const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard }[] = [
-  { value: 'card', label: 'Card', icon: CreditCard },
-  { value: 'us_bank_account', label: 'ACH (US Bank)', icon: Landmark },
+const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof CreditCard; hint?: string }[] = [
+  { value: 'card', label: 'Card + Link', icon: CreditCard, hint: 'Global' },
+  { value: 'us_bank_account', label: 'ACH Direct Debit', icon: Landmark, hint: 'Solo USD' },
+  { value: 'customer_balance', label: 'Bank Transfer', icon: Landmark, hint: 'Global' },
 ];
 
 export const QuickLinkIntlGenerator = () => {
@@ -231,6 +232,9 @@ export const QuickLinkIntlGenerator = () => {
                         <span className={`text-sm ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                           {method.label}
                         </span>
+                        {method.hint && (
+                          <span className="text-xs text-muted-foreground/60 ml-auto">{method.hint}</span>
+                        )}
                       </label>
                     );
                   })}
@@ -240,7 +244,7 @@ export const QuickLinkIntlGenerator = () => {
               {/* Currency warning */}
               {currency === 'EUR' && selectedPaymentMethods.includes('us_bank_account') && (
                 <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                  ⚠️ ACH solo funciona con USD. Se usará solo Card para EUR.
+                  ⚠️ ACH solo funciona con USD. Se eliminará automáticamente para EUR.
                 </p>
               )}
 
