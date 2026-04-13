@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { appConfig } from '@/config/app';
-import { intlPlans, i18n, langLabels, type IntlLang, type IntlCurrency } from '@/config/plansIntl';
-import { Check, ArrowRight, Wine, TrendingUp, Users, BarChart3, Globe } from 'lucide-react';
+import { intlPlans, allPlanFeaturesIntl, i18n, langLabels, type IntlLang, type IntlCurrency } from '@/config/plansIntl';
+import { Check, ArrowRight, Globe, Wine, Brain, Package, BarChart3, GraduationCap, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import BillingToggle from '@/components/BillingToggle';
 import winerimLogo from '@/assets/winerim-icon.png';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { AllFeaturesSection } from '@/components/landing/AllFeaturesSection';
+import { StatsBar } from '@/components/landing/StatsBar';
 
 const currencySymbol: Record<IntlCurrency, string> = { EUR: '€', USD: '$' };
 
@@ -23,26 +25,26 @@ const IntlLanding = () => {
     return currency === 'USD' ? convertToUsd(eurPrice) : eurPrice;
   };
 
-  const benefits = [
-    { icon: Wine, title: t.benefitSell, description: t.benefitSellDesc },
-    { icon: TrendingUp, title: t.benefitMargin, description: t.benefitMarginDesc },
-    { icon: Users, title: t.benefitTeam, description: t.benefitTeamDesc },
-    { icon: BarChart3, title: t.benefitData, description: t.benefitDataDesc },
-  ];
-
   const monthlyPlan = intlPlans.find(p => p.planSlug === 'monthly')!;
   const annualPlans = intlPlans.filter(p => p.period === 'annual');
   const annualPlan = intlPlans.find(p => p.planSlug === 'annual')!;
-
   const displayedPlans = isAnnual ? annualPlans : [monthlyPlan];
   const sym = currencySymbol[currency];
 
+  const tools = [
+    { icon: Wine, title: t.toolSales, description: t.toolSalesDesc },
+    { icon: Brain, title: t.toolAI, description: t.toolAIDesc },
+    { icon: Package, title: t.toolCellar, description: t.toolCellarDesc },
+    { icon: BarChart3, title: t.toolAnalytics, description: t.toolAnalyticsDesc },
+    { icon: GraduationCap, title: t.toolTraining, description: t.toolTrainingDesc },
+    { icon: Lightbulb, title: t.toolDecision, description: t.toolDecisionDesc },
+  ];
+
+  const problems = [t.problem1, t.problem2, t.problem3, t.problem4];
+  const features = allPlanFeaturesIntl[lang] || allPlanFeaturesIntl.en;
+
   const buildCheckoutUrl = (plan: typeof intlPlans[0]) => {
-    const params = new URLSearchParams({
-      currency,
-      lang,
-      intl: '1',
-    });
+    const params = new URLSearchParams({ currency, lang, intl: '1' });
     return `/checkout/${plan.planSlug}?${params.toString()}`;
   };
 
@@ -58,7 +60,7 @@ const IntlLanding = () => {
                 {appConfig.brandName}
               </span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {/* Language selector */}
               <div className="flex items-center gap-1">
                 <Globe className="w-4 h-4 text-muted-foreground" />
@@ -68,9 +70,7 @@ const IntlLanding = () => {
                     onClick={() => setLang(l)}
                     className={cn(
                       'text-xs px-2 py-1 rounded-md transition-colors',
-                      lang === l
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
+                      lang === l ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {l.toUpperCase()}
@@ -78,35 +78,34 @@ const IntlLanding = () => {
                 ))}
               </div>
               {/* Currency selector */}
-              <div className="flex items-center gap-1 border-l border-border pl-4">
+              <div className="flex items-center gap-1 border-l border-border pl-3">
                 {(['EUR', 'USD'] as IntlCurrency[]).map((c) => (
                   <button
                     key={c}
                     onClick={() => setCurrency(c)}
                     className={cn(
                       'text-xs px-2 py-1 rounded-md transition-colors',
-                      currency === c
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
+                      currency === c ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {c}
                   </button>
                 ))}
               </div>
-              <Link
-                to="/"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors border-l border-border pl-4"
+              <Button
+                size="sm"
+                className="btn-wine hidden sm:inline-flex"
+                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                España
-              </Link>
+                {t.viewPlans}
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="py-20 lg:py-32 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block text-sm font-medium text-primary bg-primary-light px-4 py-1.5 rounded-full mb-6">
             {t.heroTag}
@@ -135,17 +134,117 @@ const IntlLanding = () => {
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-secondary/30">
+      {/* Stats */}
+      <StatsBar stats={[
+        { value: '+1,000', label: t.statsManaged },
+        { value: '15', label: t.statsCountries },
+        { value: '+15%', label: t.statsTicket },
+      ]} />
+
+      {/* Problem */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="section-header text-primary">
+            {lang === 'en' ? 'The problem' : lang === 'it' ? 'Il problema' : 'El problema'}
+          </p>
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-10">
+            {t.problemTitle}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+            {problems.map((p, i) => (
+              <div key={i} className="flex items-start gap-3 p-5 rounded-xl border border-destructive/20 bg-destructive/5">
+                <span className="text-destructive text-lg mt-0.5">✕</span>
+                <p className="text-sm text-foreground/80 leading-relaxed">{p}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Product / 6 tools */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="card-elevated p-6 hover:scale-[1.02] transition-transform">
+          <div className="text-center mb-14">
+            <p className="section-header text-primary">{t.solutionLabel}</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+              {t.solutionTitle}
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{t.solutionSubtitle}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tools.map((tool, i) => (
+              <div key={i} className="card-elevated p-6 hover:scale-[1.02] transition-transform">
                 <div className="w-12 h-12 rounded-xl bg-primary-light flex items-center justify-center mb-4">
-                  <benefit.icon className="w-6 h-6 text-primary" />
+                  <tool.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-2">{benefit.title}</h3>
-                <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">{tool.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{tool.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* All features */}
+      <AllFeaturesSection
+        title={t.featuresTitle}
+        subtitle={t.featuresSubtitle}
+        features={features}
+      />
+
+      {/* Testimonials */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="section-header text-primary">
+              {lang === 'en' ? 'Testimonials' : lang === 'it' ? 'Testimonianze' : 'Testimonios'}
+            </p>
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground">
+              {t.testimonialsTitle}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: lang === 'en'
+                  ? 'With Winerim there\'s no need to print. The wine list is always up to date, it helps me manage stock, purchasing, and sales.'
+                  : lang === 'it'
+                    ? 'Con Winerim non c\'è bisogno di stampare. La carta è sempre aggiornata, mi aiuta a gestire stock, acquisti e vendite.'
+                    : 'Con Winerim no hay que imprimir, permite tener la carta actualizada siempre, me ayuda a gestionar los stocks, compras y ventas.',
+                name: 'Álex Pardo',
+                role: lang === 'en' ? 'Best Sommelier of Spain 2023' : lang === 'it' ? 'Miglior Sommelier di Spagna 2023' : 'Mejor Sommelier de España 2023',
+                restaurant: 'Restaurante Coque',
+              },
+              {
+                quote: lang === 'en'
+                  ? 'What used to take 10-15 minutes to explain the wine list, now with Winerim takes 3 minutes. It\'s essential for me.'
+                  : lang === 'it'
+                    ? 'Quello che prima richiedeva 10-15 minuti per spiegare la carta, ora con Winerim ne bastano 3. È indispensabile.'
+                    : 'Lo que antes eran 10/15 minutos para explicar la carta, ahora con Winerim en 3 minutos ya tienen una visión global de los vinos.',
+                name: 'Nacho Otamendi',
+                role: lang === 'en' ? 'Owner/Sommelier' : lang === 'it' ? 'Proprietario/Sommelier' : 'Propietario/Sommelier',
+                restaurant: 'Travieso Bar',
+              },
+              {
+                quote: lang === 'en'
+                  ? 'I manage my wine list more efficiently and customers are visually surprised. It gives them instant information about the wines.'
+                  : lang === 'it'
+                    ? 'Gestisco la mia carta dei vini in modo più efficiente e i clienti restano sorpresi visivamente.'
+                    : 'Gestiono mi carta de manera más eficiente y los clientes quedan sorprendidos visualmente con Winerim.',
+                name: 'Jason Tong',
+                role: lang === 'en' ? 'Chef & Owner' : lang === 'it' ? 'Chef e Proprietario' : 'Chef y Propietario',
+                restaurant: 'Singapore Garden',
+              },
+            ].map((testimonial, i) => (
+              <div key={i} className="card-elevated p-6 flex flex-col">
+                <blockquote className="text-sm text-foreground/80 italic leading-relaxed flex-1 mb-4">
+                  "{testimonial.quote}"
+                </blockquote>
+                <div className="border-t border-border pt-4">
+                  <p className="font-medium text-foreground text-sm">{testimonial.name}</p>
+                  <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                  <p className="text-xs text-primary font-medium">{testimonial.restaurant}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -155,13 +254,14 @@ const IntlLanding = () => {
       {/* Pricing */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
+            <p className="section-header text-primary">
+              {lang === 'en' ? 'Pricing' : lang === 'it' ? 'Prezzi' : 'Precios'}
+            </p>
             <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
               {t.pricingTitle}
             </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              {t.pricingSubtitle}
-            </p>
+            <p className="text-muted-foreground text-lg mb-8">{t.pricingSubtitle}</p>
             <BillingToggle
               isAnnual={isAnnual}
               onChange={setIsAnnual}
@@ -180,7 +280,7 @@ const IntlLanding = () => {
               const monthlyEquiv = plan.period === 'annual'
                 ? Math.round(price / (plan.planSlug === 'biannual' ? 6 : 12))
                 : null;
-              const features = plan.features[lang] || plan.features.en;
+              const planFeatures = plan.features[lang] || plan.features.en;
 
               return (
                 <div
@@ -221,7 +321,7 @@ const IntlLanding = () => {
                   </div>
 
                   <ul className="space-y-3 mb-8 flex-1">
-                    {features.map((feature, i) => (
+                    {planFeatures.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                         <span className="w-5 h-5 rounded-full bg-success/10 text-success flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Check className="w-3 h-3" />
@@ -243,6 +343,34 @@ const IntlLanding = () => {
               );
             })}
           </div>
+
+          <div className="mt-10 text-center">
+            <p className="text-sm text-muted-foreground">{t.guarantee}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            {t.ctaTitle}
+          </h2>
+          <p className="text-muted-foreground text-lg mb-8">{t.ctaSubtitle}</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              className="btn-wine text-base h-12 px-8"
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              {t.ctaButton}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
+              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
+                {t.ctaTalk}
+              </a>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -252,9 +380,7 @@ const IntlLanding = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <img src={winerimLogo} alt={appConfig.brandName} className="h-6 w-auto" />
-              <span className="text-sm text-muted-foreground">
-                {appConfig.companyLegalName}
-              </span>
+              <span className="text-sm text-muted-foreground">{appConfig.companyLegalName}</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a href={appConfig.termsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">

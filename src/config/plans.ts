@@ -10,6 +10,26 @@ export interface Plan {
   savings?: string;
 }
 
+/** Full feature list included in ALL plans */
+export const allPlanFeatures = [
+  'Carta digital interactiva con QR y link',
+  'Filtros dinámicos y comparador de vinos',
+  'Multiidioma automático (4 idiomas)',
+  'Maridajes automáticos con IA',
+  'Recomendaciones inteligentes vino-plato',
+  'Fichas de vino generadas por IA',
+  'Analítica avanzada de ventas',
+  'KPIs: ticket medio, rotación, margen',
+  'Control de stock e inventario',
+  'Alertas de stock bajo automáticas',
+  'Pricing y análisis de márgenes',
+  'Detección de vinos sin rotación',
+  'Formación de sala integrada',
+  'Decision Center con acciones priorizadas',
+  'Integraciones con TPV',
+  'Soporte prioritario',
+];
+
 export const plans: Plan[] = [
   {
     planSlug: 'mensual',
@@ -18,11 +38,9 @@ export const plans: Plan[] = [
     period: 'monthly',
     features: [
       'Acceso completo a la plataforma',
-      'Analítica avanzada de ventas',
-      'Formación de sala ilimitada',
-      'Recomendaciones de maridaje IA',
-      'Integraciones con TPV',
+      'Todas las funcionalidades incluidas',
       'Soporte prioritario',
+      'Sin permanencia',
     ],
     stripePaymentLinkUrl: 'https://buy.stripe.com/PLACEHOLDER_MENSUAL',
     stripePriceId: 'price_mensual',
@@ -61,7 +79,6 @@ export const plans: Plan[] = [
     highlight: true,
   },
 ];
-
 export const getPlanBySlug = (slug: string): Plan | undefined => {
   return plans.find(plan => plan.planSlug === slug);
 };
