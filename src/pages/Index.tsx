@@ -1,27 +1,24 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { appConfig } from '@/config/app';
-import { plans } from '@/config/plans';
-import { Check, ArrowRight, Wine, TrendingUp, Users, BarChart3 } from 'lucide-react';
+import { plans, allPlanFeatures } from '@/config/plans';
+import { Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import BillingToggle from '@/components/BillingToggle';
 import winerimLogo from '@/assets/winerim-icon.png';
+import { ProblemSection } from '@/components/landing/ProblemSection';
+import { ProductSection } from '@/components/landing/ProductSection';
+import { AllFeaturesSection } from '@/components/landing/AllFeaturesSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
+import { StatsBar } from '@/components/landing/StatsBar';
 
 const Index = () => {
   const [isAnnual, setIsAnnual] = useState(true);
 
-  const benefits = [
-    { icon: Wine, title: 'Vende más vino', description: 'Recomendaciones inteligentes que aumentan el ticket medio' },
-    { icon: TrendingUp, title: 'Mejora el margen', description: 'Analítica de rentabilidad por botella y proveedor' },
-    { icon: Users, title: 'Forma a tu equipo', description: 'Fichas y formación para que tu sala venda con confianza' },
-    { icon: BarChart3, title: 'Decide con datos', description: 'Dashboard de rotación, tendencias y oportunidades' },
-  ];
-
   const monthlyPlan = plans.find(p => p.planSlug === 'mensual')!;
   const annualPlans = plans.filter(p => p.period === 'annual');
   const annualPlan = plans.find(p => p.planSlug === 'anual')!;
-
   const displayedPlans = isAnnual ? annualPlans : [monthlyPlan];
 
   return (
@@ -36,28 +33,34 @@ const Index = () => {
                 {appConfig.brandName}
               </span>
             </div>
-            <div className="flex items-center gap-4">
-            </div>
+            <Button
+              size="sm"
+              className="btn-wine"
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Ver planes
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="py-20 lg:py-32 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block text-sm font-medium text-primary bg-primary-light px-4 py-1.5 rounded-full mb-6">
             {appConfig.brandClaim}
           </span>
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-foreground mb-6 text-balance">
-            El software que hace que tu restaurante{' '}
-            <span className="text-primary">venda más vino</span>
+            Vende más vino.{' '}
+            <span className="text-primary">Mejora márgenes.</span>{' '}
+            Controla tu bodega.
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Analítica, formación de sala y recomendaciones inteligentes para convertir 
-            tu carta de vinos en una máquina de generar margen.
+            Winerim convierte tu carta de vinos en una herramienta de venta, análisis y gestión
+            — con IA, sin depender del sommelier.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button 
+            <Button
               className="btn-wine text-base h-12 px-8"
               onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
             >
@@ -73,32 +76,35 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-secondary/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="card-elevated p-6 hover:scale-[1.02] transition-transform">
-                <div className="w-12 h-12 rounded-xl bg-primary-light flex items-center justify-center mb-4">
-                  <benefit.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-2">{benefit.title}</h3>
-                <p className="text-sm text-muted-foreground">{benefit.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Stats */}
+      <StatsBar />
+
+      {/* Problem */}
+      <ProblemSection />
+
+      {/* Product / 5 tools */}
+      <ProductSection />
+
+      {/* All features */}
+      <AllFeaturesSection
+        title="Todo incluido en cada plan"
+        subtitle="Sin módulos extra ni costes ocultos. Acceso completo desde el primer día."
+        features={allPlanFeatures}
+      />
+
+      {/* Testimonials */}
+      <TestimonialsSection />
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
+            <p className="section-header text-primary">Precios</p>
             <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
               Planes diseñados para hostelería
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Sin permanencia. Cancela cuando quieras.
+              Sin permanencia. Cancela cuando quieras. Todo incluido.
             </p>
             <BillingToggle
               isAnnual={isAnnual}
@@ -112,7 +118,9 @@ const Index = () => {
             displayedPlans.length === 1 ? 'max-w-md' : 'grid-cols-1 md:grid-cols-2 max-w-3xl'
           )}>
             {displayedPlans.map((plan) => {
-              const monthlyEquiv = plan.period === 'annual' ? Math.round(plan.price / (plan.planSlug === 'semestral' ? 6 : 12)) : null;
+              const monthlyEquiv = plan.period === 'annual'
+                ? Math.round(plan.price / (plan.planSlug === 'semestral' ? 6 : 12))
+                : null;
 
               return (
                 <div
@@ -165,18 +173,48 @@ const Index = () => {
 
                   <Button
                     asChild
-                    className={cn(
-                      'w-full',
-                      plan.highlight ? 'btn-wine' : 'btn-wine-outline'
-                    )}
+                    className={cn('w-full', plan.highlight ? 'btn-wine' : 'btn-wine-outline')}
                   >
                     <Link to={`/checkout/${plan.planSlug}`}>
-                      Elegir plan
+                      Contratar ahora
                     </Link>
                   </Button>
                 </div>
               );
             })}
+          </div>
+
+          {/* Guarantee */}
+          <div className="mt-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              🔒 Pago seguro · Sin permanencia · Cancela cuando quieras
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            ¿Tu carta de vinos rinde lo que debería?
+          </h2>
+          <p className="text-muted-foreground text-lg mb-8">
+            Empieza hoy y convierte tu carta en una herramienta de venta desde el primer día.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              className="btn-wine text-base h-12 px-8"
+              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Ver planes y empezar
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button asChild variant="outline" className="btn-wine-outline text-base h-12 px-8">
+              <a href="https://wa.me/34624402302" target="_blank" rel="noopener noreferrer">
+                Hablar con un asesor
+              </a>
+            </Button>
           </div>
         </div>
       </section>
