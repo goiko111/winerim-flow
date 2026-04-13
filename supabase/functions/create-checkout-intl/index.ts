@@ -132,18 +132,21 @@ serve(async (req) => {
       quantity: 1,
     }];
 
-    // Payment methods
+    // Payment methods — auto-detect by currency
     const currencyLower = (currency || 'USD').toLowerCase();
-    const allMethods = (paymentMethods || ['card']).filter((m: string) =>
-      ['card', 'sepa_debit', 'us_bank_account', 'link'].includes(m)
-    );
+    const requested = (paymentMethods || ['card']) as string[];
+    const ALLOWED = ['card', 'link', 'us_bank_account', 'customer_balance'];
+    const allMethods = requested.filter((m: string) => ALLOWED.includes(m));
     // Filter methods incompatible with currency
     const validMethods = allMethods.filter((m: string) => {
       if (m === 'us_bank_account' && currencyLower !== 'usd') return false;
-      if (m === 'sepa_debit' && currencyLower !== 'eur') return false;
       return true;
     });
     if (validMethods.length === 0) validMethods.push('card');
+    // Always include link if card is present
+    if (validMethods.includes('card') && !validMethods.includes('link')) {
+      validMethods.push('link');
+    }
 
     const origin = req.headers.get("origin") || "https://winerim.com";
 
@@ -168,6 +171,22 @@ serve(async (req) => {
         },
       },
     };
+
+    // If customer_balance is included, configure bank transfer funding
+    if (validMethods.includes('customer_balance')) {
+      sessionParams.payment_method_options = {
+        customer_balance: {
+          funding_type: 'bank_transfer',
+          bank_transfer: {
+            type: currencyLower === 'eur' ? 'eu_bank_transfer' :
+                  currencyLower === 'gbp' ? 'gb_bank_transfer' :
+                  currencyLower === 'mxn' ? 'mx_bank_transfer' :
+                  'us_bank_transfer',
+            ...(currencyLower === 'eur' ? { eu_bank_transfer: { country: 'DE' } } : {}),
+          },
+        },
+      };
+    }
 
     logStep("Creating checkout session", { paymentMethods: validMethods, currency });
     const session = await stripe.checkout.sessions.create(sessionParams);
