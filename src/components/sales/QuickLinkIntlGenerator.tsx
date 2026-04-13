@@ -237,6 +237,13 @@ export const QuickLinkIntlGenerator = () => {
                 </div>
               </div>
 
+              {/* Currency warning */}
+              {currency === 'EUR' && selectedPaymentMethods.includes('us_bank_account') && (
+                <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                  ⚠️ ACH solo funciona con USD. Se usará solo Card para EUR.
+                </p>
+              )}
+
               {/* Preview */}
               {customPrice && (
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
