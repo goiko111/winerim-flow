@@ -313,7 +313,7 @@ const IntlLanding = () => {
                         {plan.period === 'monthly' ? t.perMonth : plan.planSlug === 'biannual' ? '/6mo' : t.perYear}
                       </span>
                       <span className="text-xs text-muted-foreground ml-1">
-                        {lang === 'en' ? '+ tax' : lang === 'it' ? '+ IVA' : '+ IVA'}
+                        {lang === 'en' ? '+ tax' : lang === 'it' ? '+ imp.' : '+ imp.'}
                       </span>
                     </div>
                     {monthlyEquiv && (
@@ -349,7 +349,7 @@ const IntlLanding = () => {
 
           <div className="mt-10 text-center">
             <p className="text-sm text-muted-foreground">
-              {lang === 'en' ? 'Prices exclude tax' : lang === 'it' ? 'Prezzi IVA esclusa' : 'Precios sin IVA'} · {t.guarantee}
+              {lang === 'en' ? 'Prices exclude tax' : lang === 'it' ? 'Imposte escluse' : 'Impuestos no incluidos'} · {t.guarantee}
             </p>
           </div>
         </div>

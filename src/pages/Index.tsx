@@ -133,7 +133,7 @@ const Index = () => {
                       <span className="text-muted-foreground">
                         /{plan.period === 'monthly' ? 'mes' : plan.planSlug === 'semestral' ? '6 meses' : 'año'}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-1">+ IVA</span>
+                      <span className="text-xs text-muted-foreground ml-1">+ imp.</span>
                     </div>
                     {monthlyEquiv && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -169,7 +169,7 @@ const Index = () => {
           {/* Guarantee */}
           <div className="mt-10 text-center">
             <p className="text-sm text-muted-foreground">
-              Precios sin IVA · Pago seguro · Sin permanencia · Cancela cuando quieras
+              Impuestos no incluidos · Pago seguro · Sin permanencia · Cancela cuando quieras
             </p>
           </div>
         </div>
