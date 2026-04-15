@@ -336,7 +336,7 @@ export const CheckoutPage = () => {
 
             {/* Legal footer */}
             <p className="text-xs text-center text-muted-foreground">
-              Todos los precios son sin IVA. Los impuestos aplicables se calcularán en el momento del pago.
+              Impuestos no incluidos. Los impuestos aplicables se calcularán en el momento del pago.
             </p>
             <p className="text-xs text-center text-muted-foreground">
               {appConfig.companyLegalName} · Los cargos se realizarán según el plan seleccionado.
