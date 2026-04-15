@@ -284,6 +284,8 @@ serve(async (req) => {
       consent_collection: {
         terms_of_service: 'required',
       },
+      // Automatic tax calculation (requires Stripe Tax enabled in dashboard)
+      automatic_tax: { enabled: true },
       // Add subscription metadata
       subscription_data: {
         metadata: {
