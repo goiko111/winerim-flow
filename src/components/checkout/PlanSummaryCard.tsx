@@ -52,6 +52,7 @@ export const PlanSummaryCard = ({ plan, isCustom }: PlanSummaryCardProps) => {
           <span className="text-muted-foreground">
             /{plan.period === 'monthly' ? 'mes' : 'año'}
           </span>
+          <span className="text-sm text-muted-foreground ml-1">+ IVA</span>
         </div>
       </div>
 
