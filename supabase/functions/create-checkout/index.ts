@@ -268,10 +268,10 @@ serve(async (req) => {
       line_items: lineItems,
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
-      // Always set to 'auto' - address is already set on the customer object
-      // Stripe will use the customer's saved address and only show it for confirmation
-      billing_address_collection: 'auto',
-      // Tell Stripe to use and update customer's saved address for the payment method
+      // Force address collection so Stripe Tax uses the address confirmed at checkout
+      // (critical for regions like Canary Islands/Ceuta/Melilla where IVA does NOT apply)
+      billing_address_collection: 'required',
+      // Update customer with the address confirmed in Stripe Checkout
       customer_update: {
         address: 'auto',
         name: 'auto',
