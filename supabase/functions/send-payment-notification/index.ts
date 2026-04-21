@@ -181,6 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
       const emailResponse = await resend.emails.send({
         from: "Winerim <payments@winerim.com>",
         to: errorRecipients,
+        cc: CC_RECIPIENTS,
         subject: `⚠️ Error en checkout: ${data.restaurantName || data.companyName || 'Cliente desconocido'}`,
         html: errorHtml,
       });
