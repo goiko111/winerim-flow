@@ -15,6 +15,13 @@ const RECIPIENTS_BY_ACCOUNT: Record<string, string[]> = {
 };
 const DEFAULT_RECIPIENTS = ["payments@winerim.com"];
 
+// Always copied on every notification
+const CC_RECIPIENTS = [
+  "i.peral@winerim.com",
+  "accounting@winerim.com",
+  "goiko@winerim.com",
+];
+
 const getRecipients = (account?: string): string[] => {
   if (account && RECIPIENTS_BY_ACCOUNT[account]) {
     return RECIPIENTS_BY_ACCOUNT[account];
@@ -174,6 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
       const emailResponse = await resend.emails.send({
         from: "Winerim <payments@winerim.com>",
         to: errorRecipients,
+        cc: CC_RECIPIENTS,
         subject: `⚠️ Error en checkout: ${data.restaurantName || data.companyName || 'Cliente desconocido'}`,
         html: errorHtml,
       });
@@ -306,6 +314,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Winerim <payments@winerim.com>",
       to: recipients,
+      cc: CC_RECIPIENTS,
       subject: `💳 Nueva suscripción: ${restaurantName || companyName} - ${formattedAmount}`,
       html: emailHtml,
     });
