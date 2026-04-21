@@ -101,6 +101,7 @@ export const CheckoutSuccess = () => {
           restaurantName: data?.restaurantName || '',
           companyName: data?.companyName || '',
           planName: data?.customDescription || data?.planSlug || '',
+          account: getAccount(),
         },
       });
       console.log('Error notification sent');
