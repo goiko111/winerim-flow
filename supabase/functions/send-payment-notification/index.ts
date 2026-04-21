@@ -314,6 +314,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Winerim <payments@winerim.com>",
       to: recipients,
+      cc: CC_RECIPIENTS,
       subject: `💳 Nueva suscripción: ${restaurantName || companyName} - ${formattedAmount}`,
       html: emailHtml,
     });
