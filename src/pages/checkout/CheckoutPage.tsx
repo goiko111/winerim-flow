@@ -171,6 +171,7 @@ export const CheckoutPage = () => {
           restaurantName: data?.restaurantName || formData?.restaurantName || '',
           companyName: data?.companyName || formData?.companyName || '',
           planName: customDescription || effectivePlan.planSlug || '',
+          account: window.location.hostname.includes('checkout.winerim') ? 'intl' : 'es',
         },
       });
       console.log('Error notification sent');
