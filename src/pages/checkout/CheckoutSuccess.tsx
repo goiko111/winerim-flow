@@ -48,6 +48,10 @@ export const CheckoutSuccess = () => {
     }
   }, [searchParams]);
 
+  const getAccount = (): 'es' | 'intl' => {
+    return window.location.hostname.includes('checkout.winerim') ? 'intl' : 'es';
+  };
+
   const sendPaymentNotification = async (sessionId: string, data: CheckoutData) => {
     try {
       const intervalLabels: Record<string, string> = {
@@ -69,6 +73,7 @@ export const CheckoutSuccess = () => {
           currency: 'eur',
           paymentMethod: data.paymentMethod || 'card',
           billingInterval: intervalLabels[data.billingInterval || 'monthly'] || 'Mensual',
+          account: getAccount(),
         },
       });
       
@@ -96,6 +101,7 @@ export const CheckoutSuccess = () => {
           restaurantName: data?.restaurantName || '',
           companyName: data?.companyName || '',
           planName: data?.customDescription || data?.planSlug || '',
+          account: getAccount(),
         },
       });
       console.log('Error notification sent');

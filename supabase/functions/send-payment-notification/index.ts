@@ -8,12 +8,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Recipients for payment notifications
-const NOTIFICATION_RECIPIENTS = [
-  "i.peral@winerim.com",
-  "accounting@winerim.com",
-  "goiko@winerim.com",
-];
+// Recipients for payment notifications by account
+const RECIPIENTS_BY_ACCOUNT: Record<string, string[]> = {
+  es: ["payments@winerim.com"],
+  intl: ["subscriptions@winerim.com"],
+};
+const DEFAULT_RECIPIENTS = ["payments@winerim.com"];
+
+const getRecipients = (account?: string): string[] => {
+  if (account && RECIPIENTS_BY_ACCOUNT[account]) {
+    return RECIPIENTS_BY_ACCOUNT[account];
+  }
+  return DEFAULT_RECIPIENTS;
+};
 
 interface PaymentNotificationRequest {
   sessionId?: string;
@@ -26,6 +33,7 @@ interface PaymentNotificationRequest {
   currency?: string;
   paymentMethod?: string;
   billingInterval?: string;
+  account?: 'es' | 'intl';
   isError?: boolean;
   errorMessage?: string;
   errorContext?: string;
@@ -160,9 +168,12 @@ const handler = async (req: Request): Promise<Response> => {
         data
       );
 
+      const errorRecipients = getRecipients(data.account);
+      logStep("Sending error notification", { recipients: errorRecipients, account: data.account });
+
       const emailResponse = await resend.emails.send({
         from: "Winerim <payments@winerim.com>",
-        to: NOTIFICATION_RECIPIENTS,
+        to: errorRecipients,
         subject: `⚠️ Error en checkout: ${data.restaurantName || data.companyName || 'Cliente desconocido'}`,
         html: errorHtml,
       });
@@ -289,11 +300,12 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    logStep("Sending email to recipients", { recipients: NOTIFICATION_RECIPIENTS });
+    const recipients = getRecipients(data.account);
+    logStep("Sending email to recipients", { recipients, account: data.account });
 
     const emailResponse = await resend.emails.send({
       from: "Winerim <payments@winerim.com>",
-      to: NOTIFICATION_RECIPIENTS,
+      to: recipients,
       subject: `💳 Nueva suscripción: ${restaurantName || companyName} - ${formattedAmount}`,
       html: emailHtml,
     });
