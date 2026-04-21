@@ -300,11 +300,12 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    logStep("Sending email to recipients", { recipients: NOTIFICATION_RECIPIENTS });
+    const recipients = getRecipients(data.account);
+    logStep("Sending email to recipients", { recipients, account: data.account });
 
     const emailResponse = await resend.emails.send({
       from: "Winerim <payments@winerim.com>",
-      to: NOTIFICATION_RECIPIENTS,
+      to: recipients,
       subject: `💳 Nueva suscripción: ${restaurantName || companyName} - ${formattedAmount}`,
       html: emailHtml,
     });
