@@ -15,6 +15,13 @@ const RECIPIENTS_BY_ACCOUNT: Record<string, string[]> = {
 };
 const DEFAULT_RECIPIENTS = ["payments@winerim.com"];
 
+// Always copied on every notification
+const CC_RECIPIENTS = [
+  "i.peral@winerim.com",
+  "accounting@winerim.com",
+  "goiko@winerim.com",
+];
+
 const getRecipients = (account?: string): string[] => {
   if (account && RECIPIENTS_BY_ACCOUNT[account]) {
     return RECIPIENTS_BY_ACCOUNT[account];
