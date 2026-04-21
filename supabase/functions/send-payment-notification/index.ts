@@ -168,9 +168,12 @@ const handler = async (req: Request): Promise<Response> => {
         data
       );
 
+      const errorRecipients = getRecipients(data.account);
+      logStep("Sending error notification", { recipients: errorRecipients, account: data.account });
+
       const emailResponse = await resend.emails.send({
         from: "Winerim <payments@winerim.com>",
-        to: NOTIFICATION_RECIPIENTS,
+        to: errorRecipients,
         subject: `⚠️ Error en checkout: ${data.restaurantName || data.companyName || 'Cliente desconocido'}`,
         html: errorHtml,
       });
