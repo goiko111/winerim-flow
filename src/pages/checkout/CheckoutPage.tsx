@@ -261,7 +261,7 @@ export const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left column: Plan summary */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} />
+            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} isIntl={isIntl} />
           </div>
 
           {/* Right column: Form */}
@@ -336,9 +336,11 @@ export const CheckoutPage = () => {
             </div>
 
             {/* Legal footer */}
-            <p className="text-xs text-center text-muted-foreground">
-              Impuestos no incluidos. Los impuestos aplicables se calcularán en el momento del pago.
-            </p>
+            {!isIntl && (
+              <p className="text-xs text-center text-muted-foreground">
+                Impuestos no incluidos. Los impuestos aplicables se calcularán en el momento del pago.
+              </p>
+            )}
             <p className="text-xs text-center text-muted-foreground">
               {appConfig.companyLegalName} · Los cargos se realizarán según el plan seleccionado.
               <br />
