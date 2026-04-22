@@ -4,9 +4,10 @@ import { Check, Sparkles } from 'lucide-react';
 interface PlanSummaryCardProps {
   plan: Plan;
   isCustom?: boolean;
+  isIntl?: boolean;
 }
 
-export const PlanSummaryCard = ({ plan, isCustom }: PlanSummaryCardProps) => {
+export const PlanSummaryCard = ({ plan, isCustom, isIntl }: PlanSummaryCardProps) => {
   const testimonial = {
     quote: "Con Winerim hemos aumentado un 23% las ventas de vino por mesa. El equipo de sala ahora recomienda con confianza.",
     author: "María González",
@@ -52,7 +53,9 @@ export const PlanSummaryCard = ({ plan, isCustom }: PlanSummaryCardProps) => {
           <span className="text-muted-foreground">
             /{plan.period === 'monthly' ? 'mes' : 'año'}
           </span>
-          <span className="text-sm text-muted-foreground ml-1">+ imp.</span>
+          {!isIntl && (
+            <span className="text-sm text-muted-foreground ml-1">+ imp.</span>
+          )}
         </div>
       </div>
 
