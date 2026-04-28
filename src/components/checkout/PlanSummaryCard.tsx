@@ -1,13 +1,23 @@
 import { Plan } from '@/config/plans';
 import { Check, Sparkles } from 'lucide-react';
 
+const PERIOD_LABELS: Record<string, string> = {
+  monthly:    'mes',
+  quarterly:  'trimestre',
+  semestral:  'semestre',
+  annual:     'año',
+  mensual:    'mes',
+  anual:      'año',
+};
+
 interface PlanSummaryCardProps {
   plan: Plan;
   isCustom?: boolean;
   isIntl?: boolean;
+  billingInterval?: string | null;
 }
 
-export const PlanSummaryCard = ({ plan, isCustom, isIntl }: PlanSummaryCardProps) => {
+export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval }: PlanSummaryCardProps) => {
   const testimonial = {
     quote: "Con Winerim hemos aumentado un 23% las ventas de vino por mesa. El equipo de sala ahora recomienda con confianza.",
     author: "María González",
@@ -51,7 +61,7 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl }: PlanSummaryCardProps
             {plan.price}€
           </span>
           <span className="text-muted-foreground">
-            /{plan.period === 'monthly' ? 'mes' : 'año'}
+            /{PERIOD_LABELS[billingInterval ?? ''] ?? PERIOD_LABELS[plan.period] ?? 'mes'}
           </span>
           {!isIntl && (
             <span className="text-sm text-muted-foreground ml-1">+ imp.</span>
