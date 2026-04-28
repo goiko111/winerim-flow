@@ -105,6 +105,7 @@ export type Database = {
           plan_slug: string
           postal_code: string | null
           vat_id: string | null
+          winerim_user_id: number | null
         }
         Insert: {
           address?: string | null
@@ -124,6 +125,7 @@ export type Database = {
           plan_slug: string
           postal_code?: string | null
           vat_id?: string | null
+          winerim_user_id?: number | null
         }
         Update: {
           address?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           plan_slug?: string
           postal_code?: string | null
           vat_id?: string | null
+          winerim_user_id?: number | null
         }
         Relationships: []
       }
