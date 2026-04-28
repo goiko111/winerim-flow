@@ -76,14 +76,16 @@ export const QuickLinkIntlGenerator = () => {
   const handleGenerateLink = async () => {
     if (!customPrice) return;
     const priceNum = parseFloat(customPrice);
+    const finalPrice = currency === 'USD' ? convertToUsd(priceNum) : priceNum;
 
     try {
       const result = await createCheckoutLink({
         planSlug: 'custom',
-        customPrice: priceNum,
+        customPrice: finalPrice,
         billingInterval,
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
+        currency,
       });
       // Append intl params
       const url = new URL(result.url);

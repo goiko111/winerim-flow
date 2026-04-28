@@ -37,12 +37,18 @@ const CheckoutRedirect = () => {
       if (data.description) params.set('d', data.description);
       if (data.winerimUserId) params.set('uid', String(data.winerimUserId));
 
-      // Forward intl params from the original URL
+      // intl params: prefer stored data, fall back to URL params
       const intl = searchParams.get('intl');
-      const currency = searchParams.get('currency');
       const lang = searchParams.get('lang');
-      if (intl) params.set('intl', intl);
-      if (currency) params.set('currency', currency);
+      const urlCurrency = searchParams.get('currency');
+      const effectiveCurrency = data.currency || urlCurrency;
+      const isIntl = effectiveCurrency && effectiveCurrency.toUpperCase() !== 'EUR';
+      if (isIntl) {
+        params.set('intl', '1');
+        params.set('currency', effectiveCurrency);
+      } else if (intl) {
+        params.set('intl', intl);
+      }
       if (lang) params.set('lang', lang);
 
       navigate(`/checkout/${data.planSlug}?${params.toString()}`, { replace: true });

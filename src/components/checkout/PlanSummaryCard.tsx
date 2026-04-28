@@ -10,14 +10,22 @@ const PERIOD_LABELS: Record<string, string> = {
   anual:      'año',
 };
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€', USD: '$', GBP: '£', BRL: 'R$',
+  MXN: '$', ARS: '$', COP: '$', CLP: '$',
+};
+
 interface PlanSummaryCardProps {
   plan: Plan;
   isCustom?: boolean;
   isIntl?: boolean;
   billingInterval?: string | null;
+  currency?: string | null;
 }
 
-export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval }: PlanSummaryCardProps) => {
+export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, currency }: PlanSummaryCardProps) => {
+  const currencySymbol = CURRENCY_SYMBOLS[currency?.toUpperCase() ?? ''] ?? '€';
+  const showCurrencyCode = currency && !['EUR', ''].includes(currency.toUpperCase());
   const testimonial = {
     quote: "Con Winerim hemos aumentado un 23% las ventas de vino por mesa. El equipo de sala ahora recomienda con confianza.",
     author: "María González",
@@ -58,7 +66,7 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval }: Pla
         </h2>
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-display font-bold text-primary">
-            {plan.price}€
+            {currencySymbol}{plan.price}{showCurrencyCode ? ` ${currency!.toUpperCase()}` : ''}
           </span>
           <span className="text-muted-foreground">
             /{PERIOD_LABELS[billingInterval ?? ''] ?? PERIOD_LABELS[plan.period] ?? 'mes'}

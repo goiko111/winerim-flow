@@ -15,6 +15,7 @@ export interface CheckoutLinkData {
   paymentMethods: string[];
   description?: string;
   winerimUserId?: number;
+  currency?: string;
 }
 
 export interface CheckoutLinkResult {
@@ -40,6 +41,7 @@ export async function createCheckoutLink(data: CheckoutLinkData): Promise<Checko
       billing_interval: data.billingInterval || null,
       payment_methods: data.paymentMethods,
       description: data.description || null,
+      currency: data.currency || 'EUR',
     })
     .select('code')
     .single();
@@ -76,5 +78,6 @@ export async function getCheckoutLink(code: string): Promise<CheckoutLinkData | 
     paymentMethods: data.payment_methods,
     description: data.description ?? undefined,
     winerimUserId: data.winerim_user_id ?? undefined,
+    currency: data.currency ?? undefined,
   };
 }

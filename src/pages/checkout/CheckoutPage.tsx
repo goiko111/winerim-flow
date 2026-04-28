@@ -263,7 +263,7 @@ export const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left column: Plan summary */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} isIntl={isIntl} billingInterval={billingInterval} />
+            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} isIntl={isIntl} billingInterval={billingInterval} currency={isIntl ? intlCurrency : null} />
           </div>
 
           {/* Right column: Form */}
