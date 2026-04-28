@@ -35,6 +35,7 @@ const CheckoutRedirect = () => {
       if (data.customPrice) params.set('p', String(data.customPrice));
       if (data.billingInterval) params.set('i', data.billingInterval);
       if (data.description) params.set('d', data.description);
+      if (data.winerimUserId) params.set('uid', String(data.winerimUserId));
 
       // Forward intl params from the original URL
       const intl = searchParams.get('intl');

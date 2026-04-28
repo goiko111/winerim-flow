@@ -63,15 +63,16 @@ serve(async (req) => {
     });
 
     const body = await req.json();
-    const { 
+    const {
       planSlug,
-      customPrice, 
+      customPrice,
       customDescription,
       billingInterval,
       paymentMethods,
       customerData,
       successUrl,
       cancelUrl,
+      winerimUserId,
     } = body;
 
     logStep("Request body parsed", { 
@@ -303,6 +304,7 @@ serve(async (req) => {
           postalCode: customerData?.postalCode || '',
           country: customerData?.country || '',
           source: 'winerim_sales_portal',
+          ...(winerimUserId && { userId: String(winerimUserId) }),
         },
       },
       metadata: {

@@ -14,6 +14,7 @@ export interface CheckoutLinkData {
   billingInterval?: string;
   paymentMethods: string[];
   description?: string;
+  winerimUserId?: number;
 }
 
 export interface CheckoutLinkResult {
@@ -74,5 +75,6 @@ export async function getCheckoutLink(code: string): Promise<CheckoutLinkData | 
     billingInterval: data.billing_interval ?? undefined,
     paymentMethods: data.payment_methods,
     description: data.description ?? undefined,
+    winerimUserId: data.winerim_user_id ?? undefined,
   };
 }
