@@ -25,7 +25,6 @@ interface PlanSummaryCardProps {
 
 export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, currency }: PlanSummaryCardProps) => {
   const currencySymbol = CURRENCY_SYMBOLS[currency?.toUpperCase() ?? ''] ?? '€';
-  const showCurrencyCode = currency && !['EUR', ''].includes(currency.toUpperCase());
   const testimonial = {
     quote: "Con Winerim hemos aumentado un 23% las ventas de vino por mesa. El equipo de sala ahora recomienda con confianza.",
     author: "María González",
@@ -66,7 +65,7 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, curre
         </h2>
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-display font-bold text-primary">
-            {currencySymbol}{plan.price}{showCurrencyCode ? ` ${currency!.toUpperCase()}` : ''}
+            {plan.price}{currencySymbol}
           </span>
           <span className="text-muted-foreground">
             /{PERIOD_LABELS[billingInterval ?? ''] ?? PERIOD_LABELS[plan.period] ?? 'mes'}
