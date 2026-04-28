@@ -1,0 +1,1 @@
+ALTER TABLE public.checkout_links ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'EUR';
