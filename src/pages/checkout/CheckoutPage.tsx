@@ -230,6 +230,9 @@ export const CheckoutPage = () => {
       }
       // Open the window synchronously during the user gesture — iOS Safari blocks window.open() after await
       const newTab = window.open('', '_blank');
+      if (newTab) {
+        newTab.document.documentElement.innerHTML = `<head><meta charset="utf-8"><title>Cargando pago...</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;background:#f9fafb;color:#374151}p{font-size:1.1rem;margin-top:1rem}.spinner{width:40px;height:40px;border:3px solid #e5e7eb;border-top-color:#6366f1;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div class="spinner"></div><p>Preparando pasarela de pago…</p></body>`;
+      }
 
       const { data, error } = await supabase.functions.invoke(edgeFn, {
         body: bodyPayload,
