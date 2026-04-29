@@ -228,19 +228,26 @@ export const CheckoutPage = () => {
         bodyPayload.currency = intlCurrency;
         bodyPayload.description = customDescription || undefined;
       }
+      // Open the window synchronously during the user gesture — iOS Safari blocks window.open() after await
+      const newTab = window.open('', '_blank');
+
       const { data, error } = await supabase.functions.invoke(edgeFn, {
         body: bodyPayload,
       });
 
       if (error) {
+        newTab?.close();
         console.error('Edge function error:', error);
         await sendErrorNotification('Error al crear sesión de Stripe Checkout', error, formData);
         throw new Error(error.message || 'Error al crear la sesión de pago');
       }
 
       if (data?.sessionUrl) {
-        // Open Stripe checkout in a new tab to avoid iframe restrictions
-        window.open(data.sessionUrl, '_blank');
+        if (newTab) {
+          newTab.location.href = data.sessionUrl;
+        } else {
+          window.location.href = data.sessionUrl;
+        }
         setIsSubmitting(false);
         toast.success('Se ha abierto la pasarela de pago en una nueva pestaña');
       } else {
