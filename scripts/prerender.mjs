@@ -25,6 +25,74 @@ const BASE = 'https://winerim.wine';
 // Route definitions — keep in sync with SEOHead props in each Landing*.tsx
 // ---------------------------------------------------------------------------
 const ROUTES = [
+  // Analysis landing
+  {
+    urlPath: '/analisis-carta',
+    title: 'Analisis de Carta de Vinos Gratis | Winerim',
+    description:
+      'Analizamos gratis tu carta de vinos para detectar stock parado, oportunidades de margen, referencias sin rotacion y acciones para vender mejor en restaurante.',
+    canonical: `${BASE}/analisis-carta`,
+    hreflang: [
+      { hreflang: 'es', href: `${BASE}/analisis-carta` },
+      { hreflang: 'x-default', href: `${BASE}/analisis-carta` },
+    ],
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Analisis gratuito de carta de vinos para restaurantes',
+        description:
+          'Winerim analiza cartas de vinos de restaurantes para detectar stock parado, oportunidades de margen, referencias sin rotacion y mejoras de venta.',
+        provider: {
+          '@type': 'Organization',
+          name: 'Winerim',
+          url: BASE,
+        },
+        serviceType: 'Analisis de carta de vinos',
+        areaServed: ['ES', 'MX', 'CO', 'CL', 'AR', 'PE'],
+        url: `${BASE}/analisis-carta`,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Que analiza Winerim en una carta de vinos?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Revisamos estructura de carta, rangos de precio, rotacion potencial, stock parado, margen, oportunidades de venta y puntos donde la carta puede ayudar mejor al equipo de sala.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Necesito tener la carta digitalizada?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'No. Puedes enviar una carta en PDF, Excel, enlace web o fotografia legible. El equipo de Winerim prepara el diagnostico inicial con la informacion disponible.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Cuanto tarda el analisis?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'El primer diagnostico se puede preparar en 24-48 horas laborables cuando la carta incluye suficientes referencias y precios.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'El analisis tiene coste?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'El primer analisis de carta es gratuito para restaurantes que quieran evaluar oportunidades de venta, margen y gestion de bodega con Winerim.',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
   // ES-1
   {
     urlPath: '/es/carta-de-vinos-digital-para-restaurante',
