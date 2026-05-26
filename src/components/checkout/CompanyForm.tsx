@@ -71,6 +71,9 @@ const countries = [
   { code: 'BE', name: 'Bélgica' },
   { code: 'NL', name: 'Países Bajos' },
   { code: 'IE', name: 'Irlanda' },
+  { code: 'MX', name: 'México' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'CO', name: 'Colombia' },
 ];
 
 export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting, hideAddressFields = false }: CompanyFormProps) => {
