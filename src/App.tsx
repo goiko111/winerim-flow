@@ -13,6 +13,10 @@ import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 import CheckoutRedirect from "./pages/checkout/CheckoutRedirect";
 import SalesLogin from "./pages/sales/SalesLogin";
 import SalesDashboard from "./pages/sales/SalesDashboard";
+import LandingES1 from "./pages/landing/LandingES1";
+import LandingES2 from "./pages/landing/LandingES2";
+import LandingENUS1 from "./pages/landing/LandingENUS1";
+import AnalysisCarta from "./pages/landing/AnalysisCarta";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,11 @@ const App = () => (
           <Route path="/sales/dashboard" element={<SalesDashboard />} />
           <Route path="/portalcomercial" element={<SalesLogin />} />
           <Route path="/comercialportal" element={<SalesLogin />} />
+          <Route path="/analisis-carta" element={<AnalysisCarta />} />
+          {/* SEO Landing pages — Sprint 1 */}
+          <Route path="/es/carta-de-vinos-digital-para-restaurante" element={<LandingES1 />} />
+          <Route path="/es/software-gestion-bodega-restaurante" element={<LandingES2 />} />
+          <Route path="/en-us/wine-menu-management-software-restaurant" element={<LandingENUS1 />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
