@@ -136,19 +136,14 @@ serve(async (req) => {
       intervalCount: intervalConfig.intervalCount 
     });
 
-    // Build product description with restaurant name if available
-    const productDescription = customerData?.restaurantName 
-      ? `${customerData.restaurantName} — Suscripción Winerim`
-      : `Suscripción Winerim - ${finalName}`;
+    // Use stable, reusable product so future price updates are possible
+    const stableProductId = await getOrCreateStableProduct(stripe);
 
-    // Build line items with price_data
+    // Build line items with price_data attached to the stable product
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       price_data: {
         currency: 'eur',
-        product_data: {
-          name: finalName,
-          description: productDescription,
-        },
+        product: stableProductId,
         unit_amount: Math.round(finalPrice * 100), // Convert to cents
         recurring: {
           interval: intervalConfig.interval,
