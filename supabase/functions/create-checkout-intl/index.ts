@@ -18,6 +18,31 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT-INTL] ${step}${detailsStr}`);
 };
 
+let cachedStableProductId: string | null = null;
+async function getOrCreateStableProduct(stripe: Stripe): Promise<string> {
+  if (cachedStableProductId) return cachedStableProductId;
+  try {
+    const search = await stripe.products.search({
+      query: "metadata['winerim_stable']:'true' AND metadata['account']:'intl'",
+      limit: 1,
+    });
+    if (search.data.length > 0) {
+      cachedStableProductId = search.data[0].id;
+      return cachedStableProductId;
+    }
+  } catch (err) {
+    logStep("Stable product search failed, will create", { err: String(err) });
+  }
+  const product = await stripe.products.create({
+    name: 'Winerim International Subscription',
+    description: 'Winerim platform subscription (international)',
+    metadata: { winerim_stable: 'true', account: 'intl' },
+  });
+  cachedStableProductId = product.id;
+  logStep("Created stable product", { productId: product.id });
+  return product.id;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
