@@ -138,16 +138,14 @@ serve(async (req) => {
       }
     }
 
+    // Use stable, reusable product so future price updates are possible
+    const stableProductId = await getOrCreateStableProduct(stripe);
+
     // Line items
     const lineItems = [{
       price_data: {
         currency: (currency || 'USD').toLowerCase(),
-        product_data: {
-          name: finalName,
-          description: customerData?.companyName
-            ? `${customerData.companyName} — Winerim International`
-            : 'Winerim International Subscription',
-        },
+        product: stableProductId,
         unit_amount: Math.round(price * 100),
         recurring: {
           interval: intervalConfig.interval,
