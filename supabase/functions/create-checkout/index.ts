@@ -45,6 +45,33 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Cached stable product ID to avoid re-searching on every invocation
+let cachedStableProductId: string | null = null;
+
+async function getOrCreateStableProduct(stripe: Stripe): Promise<string> {
+  if (cachedStableProductId) return cachedStableProductId;
+  try {
+    const search = await stripe.products.search({
+      query: "metadata['winerim_stable']:'true' AND metadata['account']:'es'",
+      limit: 1,
+    });
+    if (search.data.length > 0) {
+      cachedStableProductId = search.data[0].id;
+      return cachedStableProductId;
+    }
+  } catch (err) {
+    logStep("Stable product search failed, will create", { err: String(err) });
+  }
+  const product = await stripe.products.create({
+    name: 'Suscripción Winerim',
+    description: 'Suscripción a la plataforma Winerim',
+    metadata: { winerim_stable: 'true', account: 'es' },
+  });
+  cachedStableProductId = product.id;
+  logStep("Created stable product", { productId: product.id });
+  return product.id;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -109,19 +136,14 @@ serve(async (req) => {
       intervalCount: intervalConfig.intervalCount 
     });
 
-    // Build product description with restaurant name if available
-    const productDescription = customerData?.restaurantName 
-      ? `${customerData.restaurantName} — Suscripción Winerim`
-      : `Suscripción Winerim - ${finalName}`;
+    // Use stable, reusable product so future price updates are possible
+    const stableProductId = await getOrCreateStableProduct(stripe);
 
-    // Build line items with price_data
+    // Build line items with price_data attached to the stable product
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       price_data: {
         currency: 'eur',
-        product_data: {
-          name: finalName,
-          description: productDescription,
-        },
+        product: stableProductId,
         unit_amount: Math.round(finalPrice * 100), // Convert to cents
         recurring: {
           interval: intervalConfig.interval,
