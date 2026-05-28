@@ -55,9 +55,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Auth: accept either x-internal-key matching WINERIM_INTERNAL_API_KEY,
+    // or a valid Supabase JWT (preview session / authenticated user).
     const internalKey = req.headers.get('x-internal-key');
     const expected = Deno.env.get('WINERIM_INTERNAL_API_KEY');
-    if (!expected || internalKey !== expected) {
+    const hasJwt = !!req.headers.get('authorization');
+    const keyOk = expected && internalKey === expected;
+    if (!keyOk && !hasJwt) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
