@@ -10,7 +10,7 @@ import { BankTransferManager } from '@/components/sales/BankTransferManager';
 import { StripeInternationalManager } from '@/components/sales/StripeInternationalManager';
 import { ProformaGenerator } from '@/components/sales/ProformaGenerator';
 import { ActivityTable } from '@/components/sales/ActivityTable';
-import { SubscriptionMigrationPanel } from '@/components/sales/SubscriptionMigrationPanel';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
