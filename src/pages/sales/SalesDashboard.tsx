@@ -243,7 +243,6 @@ export const SalesDashboard = () => {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="activity" className="space-y-6">
-                  <SubscriptionMigrationPanel />
                   <ActivityTable logs={activityLogs} onRefresh={loadData} />
                 </TabsContent>
                 <TabsContent value="transfers">
