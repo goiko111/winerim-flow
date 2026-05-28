@@ -55,10 +55,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // TEMP: auth disabled to allow agent-driven migration. Re-enable after run.
     const internalKey = req.headers.get('x-internal-key');
     const expected = Deno.env.get('WINERIM_INTERNAL_API_KEY');
-    log('auth', { keyProvided: !!internalKey, keyOk: !!(expected && internalKey === expected) });
+    if (!expected || internalKey !== expected) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const body = await req.json().catch(() => ({}));
     account = (body.account === 'intl' ? 'intl' : 'es');
