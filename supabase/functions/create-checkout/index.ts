@@ -153,26 +153,11 @@ serve(async (req) => {
       quantity: 1,
     }];
 
-    // Find or create customer
+    // Always create a NEW Stripe customer per subscription (one-per-subscription policy)
     let customerId: string | undefined;
     const customerEmail = customerData?.email;
 
     if (customerEmail) {
-      logStep("Looking up customer by email", { email: customerEmail });
-      const existingCustomers = await stripe.customers.list({ 
-        email: customerEmail, 
-        limit: 1 
-      });
-
-      // Build full address string
-      const fullAddress = [
-        customerData.address,
-        customerData.postalCode,
-        customerData.city,
-        customerData.state,
-        customerData.country,
-      ].filter(Boolean).join(', ');
-
       const customerMetadata = {
         companyName: customerData.companyName || '',
         restaurantName: customerData.restaurantName || '',
@@ -185,76 +170,37 @@ serve(async (req) => {
         country: customerData.country || '',
         promoCode: customerData.promoCode || '',
         onboardingNotes: customerData.onboardingNotes || '',
+        ...(winerimUserId && { winerimUserId: String(winerimUserId) }),
       };
 
-      if (existingCustomers.data.length > 0) {
-        customerId = existingCustomers.data[0].id;
-        logStep("Found existing customer", { customerId });
-        
-        // Update customer with latest company data
-        await stripe.customers.update(customerId, {
-          name: customerData.companyName,
-          phone: customerData.phone,
-          address: {
-            line1: customerData.address,
-            city: customerData.city,
-            state: customerData.state,
-            postal_code: customerData.postalCode,
-            country: customerData.country,
-          },
-          metadata: customerMetadata,
-        });
+      logStep("Creating new customer (one-per-subscription policy)", { email: customerEmail, companyName: customerData.companyName });
+      const newCustomer = await stripe.customers.create({
+        email: customerEmail,
+        name: customerData.companyName,
+        phone: customerData.phone,
+        address: {
+          line1: customerData.address,
+          city: customerData.city,
+          state: customerData.state,
+          postal_code: customerData.postalCode,
+          country: customerData.country,
+        },
+        metadata: customerMetadata,
+      });
+      customerId = newCustomer.id;
+      logStep("Customer created", { customerId });
 
-        // Add or update Tax ID (CIF/VAT) if provided
-        if (customerData.vatId) {
-          try {
-            // First, try to delete existing tax IDs to avoid duplicates
-            const existingTaxIds = await stripe.customers.listTaxIds(customerId);
-            for (const taxId of existingTaxIds.data) {
-              await stripe.customers.deleteTaxId(customerId, taxId.id);
-            }
-            // Add the new tax ID
-            const taxType = getTaxIdType(customerData.country);
-            await stripe.customers.createTaxId(customerId, {
-              type: taxType,
-              value: customerData.vatId,
-            });
-            logStep("Tax ID updated", { vatId: customerData.vatId, type: taxType });
-          } catch (taxError) {
-            logStep("Warning: Could not set Tax ID", { error: String(taxError) });
-          }
-        }
-      } else {
-        // Create new customer with all data
-        logStep("Creating new customer", { email: customerEmail, companyName: customerData.companyName });
-        const newCustomer = await stripe.customers.create({
-          email: customerEmail,
-          name: customerData.companyName,
-          phone: customerData.phone,
-          address: {
-            line1: customerData.address,
-            city: customerData.city,
-            state: customerData.state,
-            postal_code: customerData.postalCode,
-            country: customerData.country,
-          },
-          metadata: customerMetadata,
-        });
-        customerId = newCustomer.id;
-        logStep("Customer created", { customerId });
-
-        // Add Tax ID (CIF/VAT) if provided
-        if (customerData.vatId) {
-          try {
-            const taxType = getTaxIdType(customerData.country);
-            await stripe.customers.createTaxId(customerId, {
-              type: taxType,
-              value: customerData.vatId,
-            });
-            logStep("Tax ID added", { vatId: customerData.vatId, type: taxType });
-          } catch (taxError) {
-            logStep("Warning: Could not set Tax ID", { error: String(taxError) });
-          }
+      // Add Tax ID (CIF/VAT) if provided
+      if (customerData.vatId) {
+        try {
+          const taxType = getTaxIdType(customerData.country);
+          await stripe.customers.createTaxId(customerId, {
+            type: taxType,
+            value: customerData.vatId,
+          });
+          logStep("Tax ID added", { vatId: customerData.vatId, type: taxType });
+        } catch (taxError) {
+          logStep("Warning: Could not set Tax ID", { error: String(taxError) });
         }
       }
     }
