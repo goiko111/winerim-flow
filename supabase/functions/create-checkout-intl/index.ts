@@ -82,15 +82,12 @@ serve(async (req) => {
       ? `${intervalConfig.label} Subscription — ${description}`
       : `${intervalConfig.label} Subscription — Winerim`;
 
-    // Find or create customer — handle multi-currency by checking existing subscriptions
+    // Always create a NEW Stripe customer per subscription (one-per-subscription policy)
     let customerId: string | undefined;
     const customerEmail = customerData?.email;
     const targetCurrency = (currency || 'USD').toLowerCase();
 
     if (customerEmail) {
-      logStep("Looking up customer", { email: customerEmail });
-      const existing = await stripe.customers.list({ email: customerEmail, limit: 100 });
-
       const customerParams = {
         email: customerEmail,
         name: customerData.companyName || customerData.customerName,
@@ -109,33 +106,9 @@ serve(async (req) => {
         },
       };
 
-      // Find a customer compatible with this currency (no active subs in another currency)
-      let compatibleCustomer: string | undefined;
-      for (const cust of existing.data) {
-        const subs = await stripe.subscriptions.list({ customer: cust.id, limit: 10 });
-        const activeSubs = subs.data.filter(s => ['active', 'trialing', 'past_due', 'incomplete'].includes(s.status));
-        if (activeSubs.length === 0) {
-          // No active subs — safe to reuse
-          compatibleCustomer = cust.id;
-          break;
-        }
-        const sameCurrency = activeSubs.every(s => s.currency === targetCurrency);
-        if (sameCurrency) {
-          compatibleCustomer = cust.id;
-          break;
-        }
-      }
-
-      if (compatibleCustomer) {
-        customerId = compatibleCustomer;
-        await stripe.customers.update(customerId, customerParams);
-        logStep("Using compatible customer", { customerId, targetCurrency });
-      } else {
-        // Create a new customer for this currency
-        const newCustomer = await stripe.customers.create(customerParams);
-        customerId = newCustomer.id;
-        logStep("Created new customer for currency", { customerId, targetCurrency });
-      }
+      const newCustomer = await stripe.customers.create(customerParams);
+      customerId = newCustomer.id;
+      logStep("Created new customer (one-per-subscription policy)", { customerId, targetCurrency });
     }
 
     // Use stable, reusable product so future price updates are possible
