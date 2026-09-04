@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CreditCard, Building2, Landmark, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PaymentMethod } from '@/config/app';
+import { CheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
 interface PaymentMethodSelectorProps {
   value: PaymentMethod;
@@ -9,48 +10,17 @@ interface PaymentMethodSelectorProps {
   showBankTransfer?: boolean;
   isIntl?: boolean;
   className?: string;
+  lang?: CheckoutLang;
 }
 
-const nationalMethods = [
-  {
-    id: 'card' as PaymentMethod,
-    name: 'Tarjeta de crédito/débito',
-    description: 'Visa, Mastercard, American Express',
-    icon: CreditCard,
-    note: null,
-  },
-  {
-    id: 'sepa_debit' as PaymentMethod,
-    name: 'Domiciliación bancaria (SEPA)',
-    description: 'Cargo directo en cuenta bancaria',
-    icon: Building2,
-    note: 'La confirmación de SEPA puede tardar 2-5 días hábiles según el banco.',
-  },
-  {
-    id: 'bank_transfer' as PaymentMethod,
-    name: 'Transferencia bancaria',
-    description: 'Solo disponible para planes anuales',
-    icon: Landmark,
-    note: 'Recibirás los datos bancarios por email tras confirmar.',
-  },
-];
-
-const intlMethods = [
-  {
-    id: 'card' as PaymentMethod,
-    name: 'Credit/Debit Card',
-    description: 'Visa, Mastercard, American Express',
-    icon: CreditCard,
-    note: null,
-  },
-  {
-    id: 'us_bank_account' as PaymentMethod,
-    name: 'ACH Direct Debit (US Bank)',
-    description: 'Direct debit from US bank account',
-    icon: Landmark,
-    note: 'ACH confirmation may take 2-4 business days.',
-  },
-];
+const nationalMethodIds: PaymentMethod[] = ['card', 'sepa_debit', 'bank_transfer'];
+const intlMethodIds: PaymentMethod[] = ['card', 'us_bank_account'];
+const methodIcons: Record<string, typeof CreditCard> = {
+  card: CreditCard,
+  sepa_debit: Building2,
+  bank_transfer: Landmark,
+  us_bank_account: Landmark,
+};
 
 export const PaymentMethodSelector = ({
   value,
@@ -58,17 +28,25 @@ export const PaymentMethodSelector = ({
   showBankTransfer = false,
   isIntl = false,
   className,
+  lang = 'es',
 }: PaymentMethodSelectorProps) => {
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
+  const t = getCheckoutDict(lang);
 
-  const baseMethods = isIntl ? intlMethods : nationalMethods;
-  const availableMethods = baseMethods.filter(
-    (method) => method.id !== 'bank_transfer' || showBankTransfer
-  );
+  const baseIds = isIntl ? intlMethodIds : nationalMethodIds;
+  const availableMethods = baseIds
+    .filter((id) => id !== 'bank_transfer' || showBankTransfer)
+    .map((id) => ({
+      id,
+      name: t.methods[id]?.name ?? id,
+      description: t.methods[id]?.description ?? '',
+      note: t.methods[id]?.note ?? null,
+      icon: methodIcons[id] ?? CreditCard,
+    }));
 
   return (
     <div className={cn('space-y-3', className)}>
-      <p className="section-header">Método de pago</p>
+      <p className="section-header">{t.paymentMethodLabel}</p>
       
       <div className="space-y-2">
         {availableMethods.map((method) => {
