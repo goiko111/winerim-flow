@@ -11,14 +11,7 @@ import { TermsCheckbox } from '@/components/checkout/TermsCheckbox';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Interval labels for custom plans
-const INTERVAL_LABELS: Record<string, string> = {
-  'monthly': 'Mensual',
-  'quarterly': 'Trimestral', 
-  'semestral': 'Semestral',
-  'annual': 'Anual',
-};
+import { parseCheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
 export const CheckoutPage = () => {
   const { planSlug } = useParams<{ planSlug: string }>();
@@ -45,6 +38,9 @@ export const CheckoutPage = () => {
   const allowedMethods = (searchParams.get('m') || searchParams.get('methods'))?.split(',') || null;
   const isIntl = searchParams.get('intl') === '1';
   const intlCurrency = searchParams.get('currency') || 'EUR';
+  const lang = parseCheckoutLang(searchParams.get('lang'));
+  const t = getCheckoutDict(lang);
+  const INTERVAL_LABELS = t.intervalNames;
 
   // Parse prefill data from URL (support short, medium, and legacy params)
   const prefillData = searchParams.get('prefill')
@@ -101,17 +97,11 @@ export const CheckoutPage = () => {
     ? {
         planSlug: 'custom',
         name: customDescription 
-          ? `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'} — ${customDescription}`
-          : `Suscripción ${INTERVAL_LABELS[billingInterval || 'monthly'] || 'Personalizada'}`,
+          ? `${t.subscription} ${INTERVAL_LABELS[billingInterval || 'monthly'] || t.customSubscription} — ${customDescription}`
+          : `${t.subscription} ${INTERVAL_LABELS[billingInterval || 'monthly'] || t.customSubscription}`,
         price: customPrice,
         period: getEffectivePeriod(),
-        features: [
-          'Acceso completo a la plataforma',
-          'Analítica avanzada de ventas',
-          'Formación de sala ilimitada',
-          'Recomendaciones de maridaje IA',
-          'Soporte prioritario',
-        ],
+        features: t.planFeatures,
         stripePaymentLinkUrl: '',
       }
     : basePlan
@@ -119,9 +109,9 @@ export const CheckoutPage = () => {
           ...basePlan,
           price: customPrice ?? basePlan.price,
           name: hasCustomParams && customDescription 
-            ? `Suscripción ${INTERVAL_LABELS[billingInterval || basePlan.period] || basePlan.name} — ${customDescription}`
+            ? `${t.subscription} ${INTERVAL_LABELS[billingInterval || basePlan.period] || basePlan.name} — ${customDescription}`
             : hasCustomParams && billingInterval
-              ? `Suscripción ${INTERVAL_LABELS[billingInterval]}`
+              ? `${t.subscription} ${INTERVAL_LABELS[billingInterval]}`
               : customDescription 
                 ? `${basePlan.name} — ${customDescription}` 
                 : basePlan.name,
@@ -185,14 +175,14 @@ export const CheckoutPage = () => {
     // Check terms first
     if (!termsAccepted) {
       setTermsError(true);
-      toast.error('Debes aceptar los términos y condiciones');
+      toast.error(t.mustAcceptTerms);
       return;
     }
     setTermsError(false);
 
     // Validate form data exists and is valid
     if (!formData || !isFormValid) {
-      toast.error('Por favor, completa todos los campos del formulario correctamente');
+      toast.error(t.completeForm);
       return;
     }
 
@@ -252,7 +242,7 @@ export const CheckoutPage = () => {
           window.location.href = data.sessionUrl;
         }
         setIsSubmitting(false);
-        toast.success('Se ha abierto la pasarela de pago en una nueva pestaña');
+        toast.success(t.newTabOpened);
       } else {
         const noUrlError = new Error('No se recibió la URL de pago');
         await sendErrorNotification('Stripe no devolvió URL de checkout', noUrlError, formData);
@@ -260,7 +250,7 @@ export const CheckoutPage = () => {
       }
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error('Error al procesar el pago. Por favor, inténtalo de nuevo.');
+      toast.error(t.paymentError);
       setIsSubmitting(false);
     }
   };
@@ -273,17 +263,17 @@ export const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Left column: Plan summary */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} isIntl={isIntl} billingInterval={billingInterval} currency={isIntl ? intlCurrency : null} />
+            <PlanSummaryCard plan={effectivePlan} isCustom={Boolean(isCustomCheckout || customPrice)} isIntl={isIntl} billingInterval={billingInterval} currency={isIntl ? intlCurrency : null} lang={lang} />
           </div>
 
           {/* Right column: Form */}
           <div className="space-y-8">
             <div>
               <h1 className="font-display text-2xl font-semibold text-foreground mb-2">
-                Completa tu suscripción
+                {t.title}
               </h1>
               <p className="text-muted-foreground">
-                Rellena los datos de facturación para comenzar con {appConfig.brandName}.
+                {t.subtitle} {appConfig.brandName}.
               </p>
             </div>
 
@@ -295,6 +285,7 @@ export const CheckoutPage = () => {
                   onChange={setPaymentMethod}
                   showBankTransfer={showBankTransfer}
                   isIntl={isIntl}
+                  lang={lang}
                 />
               )}
 
@@ -305,6 +296,7 @@ export const CheckoutPage = () => {
                 defaultValues={Object.keys(cleanedPrefillData).length > 0 ? cleanedPrefillData : undefined}
                 isSubmitting={isSubmitting}
                 hideAddressFields={hideAddressFields}
+                lang={lang}
               />
 
               <TermsCheckbox
@@ -314,6 +306,7 @@ export const CheckoutPage = () => {
                   if (checked) setTermsError(false);
                 }}
                 error={termsError}
+                lang={lang}
               />
 
               <Button
@@ -324,11 +317,11 @@ export const CheckoutPage = () => {
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Procesando...
+                    {t.processing}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    Continuar al pago
+                    {t.continueToPayment}
                     <ArrowRight className="w-5 h-5" />
                   </span>
                 )}
@@ -342,7 +335,7 @@ export const CheckoutPage = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Shield className="w-4 h-4" />
-                  Pago seguro con Stripe
+                  {t.securePayment}
                 </span>
               </div>
             </div>
@@ -350,13 +343,13 @@ export const CheckoutPage = () => {
             {/* Legal footer */}
             {!isIntl && (
               <p className="text-xs text-center text-muted-foreground">
-                Impuestos no incluidos. Los impuestos aplicables se calcularán en el momento del pago.
+                {t.taxNotice}
               </p>
             )}
             <p className="text-xs text-center text-muted-foreground">
-              {appConfig.companyLegalName} · Los cargos se realizarán según el plan seleccionado.
+              {appConfig.companyLegalName} · {t.legalNotice}
               <br />
-              Puedes cancelar en cualquier momento desde tu panel de cliente.
+              {t.cancelAnytime}
             </p>
           </div>
         </div>
