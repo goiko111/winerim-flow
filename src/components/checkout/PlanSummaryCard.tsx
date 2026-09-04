@@ -1,14 +1,6 @@
 import { Plan } from '@/config/plans';
 import { Check, Sparkles } from 'lucide-react';
-
-const PERIOD_LABELS: Record<string, string> = {
-  monthly:    'mes',
-  quarterly:  'trimestre',
-  semestral:  'semestre',
-  annual:     'año',
-  mensual:    'mes',
-  anual:      'año',
-};
+import { CheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€', USD: '$', GBP: '£', BRL: 'R$',
@@ -21,22 +13,19 @@ interface PlanSummaryCardProps {
   isIntl?: boolean;
   billingInterval?: string | null;
   currency?: string | null;
+  lang?: CheckoutLang;
 }
 
-export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, currency }: PlanSummaryCardProps) => {
+export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, currency, lang = 'es' }: PlanSummaryCardProps) => {
+  const t = getCheckoutDict(lang);
   const currencySymbol = CURRENCY_SYMBOLS[currency?.toUpperCase() ?? ''] ?? '€';
   const testimonial = {
-    quote: "Con Winerim hemos aumentado un 23% las ventas de vino por mesa. El equipo de sala ahora recomienda con confianza.",
+    quote: t.testimonialQuote,
     author: "María González",
-    role: "Directora, Restaurante El Bodegón"
+    role: t.testimonialRole,
   };
 
-  const impacts = [
-    "Mayor rotación de carta",
-    "Mejor margen por botella",
-    "Equipo de sala más preparado",
-    "Decisiones basadas en datos"
-  ];
+  const impacts = t.impacts;
 
   return (
     <div className="space-y-8">
@@ -46,12 +35,12 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, curre
           {isCustom && (
             <span className="text-xs font-medium uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full flex items-center gap-1.5">
               <Sparkles className="w-3 h-3" />
-              Oferta personalizada
+              {t.customOffer}
             </span>
           )}
           {!isCustom && plan.highlight && (
             <span className="text-xs font-medium uppercase tracking-wider text-primary bg-primary-light px-3 py-1 rounded-full">
-              Más popular
+              {t.mostPopular}
             </span>
           )}
           {!isCustom && plan.savings && (
@@ -68,17 +57,17 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, curre
             {plan.price}{currencySymbol}
           </span>
           <span className="text-muted-foreground">
-            /{PERIOD_LABELS[billingInterval ?? ''] ?? PERIOD_LABELS[plan.period] ?? 'mes'}
+            /{t.periods[billingInterval ?? ''] ?? t.periods[plan.period] ?? t.periods.monthly}
           </span>
           {!isIntl && (
-            <span className="text-sm text-muted-foreground ml-1">+ imp.</span>
+            <span className="text-sm text-muted-foreground ml-1">{t.plusTax}</span>
           )}
         </div>
       </div>
 
       {/* Features */}
       <div>
-        <p className="section-header">Incluye</p>
+        <p className="section-header">{t.includes}</p>
         <ul className="space-y-3">
           {plan.features.map((feature, index) => (
             <li key={index} className="feature-item animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
@@ -93,7 +82,7 @@ export const PlanSummaryCard = ({ plan, isCustom, isIntl, billingInterval, curre
 
       {/* Impact */}
       <div className="p-5 rounded-xl gradient-wine-light border border-primary/10">
-        <p className="section-header text-primary">Impacto esperado</p>
+        <p className="section-header text-primary">{t.expectedImpact}</p>
         <ul className="space-y-2">
           {impacts.map((impact, index) => (
             <li key={index} className="text-sm text-foreground/80 flex items-center gap-2">

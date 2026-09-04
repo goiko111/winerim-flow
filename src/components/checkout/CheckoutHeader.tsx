@@ -1,8 +1,10 @@
 import { appConfig } from '@/config/app';
 import { Link } from 'react-router-dom';
 import winerimIcon from '@/assets/winerim-icon.png';
+import { CheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
-export const CheckoutHeader = () => {
+export const CheckoutHeader = ({ lang = 'es' }: { lang?: CheckoutLang }) => {
+  const t = getCheckoutDict(lang);
   return (
     <header className="w-full border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,13 +27,13 @@ export const CheckoutHeader = () => {
               href={appConfig.termsUrl} 
               className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
             >
-              Condiciones
+              {t.termsOfService}
             </a>
             <a 
               href={appConfig.privacyUrl} 
               className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
             >
-              Privacidad
+              {t.privacyPolicy}
             </a>
             <a 
               href={`mailto:${appConfig.supportEmail}`}

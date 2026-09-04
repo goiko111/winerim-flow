@@ -1,14 +1,17 @@
 import { appConfig } from '@/config/app';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { CheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
 interface TermsCheckboxProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   error?: boolean;
+  lang?: CheckoutLang;
 }
 
-export const TermsCheckbox = ({ checked, onCheckedChange, error }: TermsCheckboxProps) => {
+export const TermsCheckbox = ({ checked, onCheckedChange, error, lang = 'es' }: TermsCheckboxProps) => {
+  const t = getCheckoutDict(lang);
   return (
     <div className="space-y-2">
       <div className="flex items-start gap-3">
@@ -22,30 +25,30 @@ export const TermsCheckbox = ({ checked, onCheckedChange, error }: TermsCheckbox
           htmlFor="terms"
           className="text-sm text-foreground/80 leading-relaxed cursor-pointer"
         >
-          He leído y acepto las{' '}
+          {t.termsPrefix}{' '}
           <a
             href={appConfig.termsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline font-medium"
           >
-            Condiciones de servicio
+            {t.termsOfService}
           </a>{' '}
-          y la{' '}
+          {t.and}{' '}
           <a
             href={appConfig.privacyUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline font-medium"
           >
-            Política de privacidad
+            {t.privacyPolicy}
           </a>
-          , y autorizo los cargos recurrentes según el plan contratado.
+          {t.termsSuffix}
         </Label>
       </div>
       {error && (
         <p className="text-sm text-destructive ml-7">
-          Debes aceptar los términos para continuar
+          {t.termsError}
         </p>
       )}
     </div>

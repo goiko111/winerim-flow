@@ -12,25 +12,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CheckoutLang, getCheckoutDict } from '@/config/checkoutI18n';
 
 // Base schema without address fields
-const baseCompanyFormSchema = z.object({
-  companyName: z.string().min(2, 'El nombre de la empresa es obligatorio'),
-  restaurantName: z.string().min(2, 'El nombre del restaurante es obligatorio'),
-  vatId: z.string().min(5, 'CIF/NIF/VAT es obligatorio'),
-  email: z.string().email('Email inválido'),
-  phone: z.string().min(9, 'Teléfono es obligatorio'),
+const buildBaseSchema = (e: ReturnType<typeof getCheckoutDict>['errors']) => z.object({
+  companyName: z.string().min(2, e.companyName),
+  restaurantName: z.string().min(2, e.restaurantName),
+  vatId: z.string().min(5, e.vatId),
+  email: z.string().email(e.email),
+  phone: z.string().min(9, e.phone),
   promoCode: z.string().optional(),
   onboardingNotes: z.string().optional(),
 });
 
 // Address fields schema
-const addressFieldsSchema = z.object({
-  country: z.string().min(2, 'País es obligatorio'),
-  state: z.string().min(2, 'Provincia/Estado es obligatorio'),
-  city: z.string().min(2, 'Ciudad es obligatoria'),
-  postalCode: z.string().min(4, 'Código postal es obligatorio'),
-  address: z.string().min(5, 'Dirección es obligatoria'),
+const buildAddressSchema = (e: ReturnType<typeof getCheckoutDict>['errors']) => z.object({
+  country: z.string().min(2, e.country),
+  state: z.string().min(2, e.state),
+  city: z.string().min(2, e.city),
+  postalCode: z.string().min(4, e.postalCode),
+  address: z.string().min(5, e.address),
 });
 
 // Optional address fields schema (for SEPA)
@@ -42,11 +43,10 @@ const optionalAddressFieldsSchema = z.object({
   address: z.string().optional(),
 });
 
-// Full schema with required address
-const companyFormSchema = baseCompanyFormSchema.merge(addressFieldsSchema);
+const esErrors = getCheckoutDict('es').errors;
 
-// Schema without required address (for SEPA)
-const companyFormSchemaWithoutAddress = baseCompanyFormSchema.merge(optionalAddressFieldsSchema);
+// Full schema with required address
+const companyFormSchema = buildBaseSchema(esErrors).merge(buildAddressSchema(esErrors));
 
 export type CompanyFormData = z.infer<typeof companyFormSchema>;
 
@@ -59,6 +59,7 @@ interface CompanyFormProps {
   defaultValues?: Partial<CompanyFormData>;
   isSubmitting?: boolean;
   hideAddressFields?: boolean;
+  lang?: CheckoutLang;
 }
 
 const countries = [
@@ -132,9 +133,22 @@ const countries = [
   { code: 'IN', name: 'India' },
 ];
 
-export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting, hideAddressFields = false }: CompanyFormProps) => {
+export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmitting, hideAddressFields = false, lang = 'es' }: CompanyFormProps) => {
+  const t = getCheckoutDict(lang);
+  const countryNames = (() => {
+    try {
+      return new Intl.DisplayNames([lang], { type: 'region' });
+    } catch {
+      return null;
+    }
+  })();
+  const countryLabel = (code: string, fallback: string) => countryNames?.of(code) || fallback;
+
   // Use appropriate schema based on whether address fields are hidden
-  const schema = hideAddressFields ? companyFormSchemaWithoutAddress : companyFormSchema;
+  const base = buildBaseSchema(t.errors);
+  const schema = hideAddressFields
+    ? base.merge(optionalAddressFieldsSchema)
+    : base.merge(buildAddressSchema(t.errors));
   
   const {
     register,
@@ -163,11 +177,11 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
     <form id="company-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Company info */}
       <div className="space-y-4">
-        <p className="section-header">Datos de la empresa</p>
+        <p className="section-header">{t.companySection}</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="companyName">Razón social / Empresa *</Label>
+            <Label htmlFor="companyName">{t.companyName} *</Label>
             <Input
               id="companyName"
               {...register('companyName')}
@@ -180,7 +194,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
           </div>
 
           <div>
-            <Label htmlFor="restaurantName">Nombre del restaurante *</Label>
+            <Label htmlFor="restaurantName">{t.restaurantName} *</Label>
             <Input
               id="restaurantName"
               {...register('restaurantName')}
@@ -193,7 +207,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
           </div>
 
           <div>
-            <Label htmlFor="vatId">CIF / NIF / VAT *</Label>
+            <Label htmlFor="vatId">{t.vatId} *</Label>
             <Input
               id="vatId"
               {...register('vatId')}
@@ -206,7 +220,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
           </div>
 
           <div>
-            <Label htmlFor="phone">Teléfono *</Label>
+            <Label htmlFor="phone">{t.phone} *</Label>
             <Input
               id="phone"
               type="tel"
@@ -220,7 +234,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
           </div>
 
           <div className="sm:col-span-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">{t.email} *</Label>
             <Input
               id="email"
               type="email"
@@ -238,22 +252,22 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
       {/* Billing address - hidden for SEPA as Stripe will collect it */}
       {!hideAddressFields && (
         <div className="space-y-4">
-          <p className="section-header">Dirección de facturación</p>
+          <p className="section-header">{t.billingSection}</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="country">País *</Label>
+              <Label htmlFor="country">{t.country} *</Label>
               <Select
                 value={selectedCountry}
                 onValueChange={(value) => setValue('country', value)}
               >
                 <SelectTrigger className="input-premium mt-1.5">
-                  <SelectValue placeholder="Selecciona país" />
+                  <SelectValue placeholder={t.selectCountry} />
                 </SelectTrigger>
                 <SelectContent>
                   {countries.map((country) => (
                     <SelectItem key={country.code} value={country.code}>
-                      {country.name}
+                      {countryLabel(country.code, country.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -264,7 +278,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
             </div>
 
             <div>
-              <Label htmlFor="state">Provincia / Estado *</Label>
+              <Label htmlFor="state">{t.state} *</Label>
               <Input
                 id="state"
                 {...register('state')}
@@ -277,7 +291,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
             </div>
 
             <div>
-              <Label htmlFor="city">Ciudad *</Label>
+              <Label htmlFor="city">{t.city} *</Label>
               <Input
                 id="city"
                 {...register('city')}
@@ -290,7 +304,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
             </div>
 
             <div>
-              <Label htmlFor="postalCode">Código postal *</Label>
+              <Label htmlFor="postalCode">{t.postalCode} *</Label>
               <Input
                 id="postalCode"
                 {...register('postalCode')}
@@ -303,7 +317,7 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
             </div>
 
             <div className="sm:col-span-2">
-              <Label htmlFor="address">Dirección *</Label>
+              <Label htmlFor="address">{t.address} *</Label>
               <Input
                 id="address"
                 {...register('address')}
@@ -322,17 +336,17 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
       {hideAddressFields && (
         <div className="rounded-lg bg-muted/50 border border-border p-4">
           <p className="text-sm text-muted-foreground">
-            La dirección de facturación se solicitará en el siguiente paso como parte del mandato SEPA.
+            {t.sepaAddressNotice}
           </p>
         </div>
       )}
 
       {/* Optional fields */}
       <div className="space-y-4">
-        <p className="section-header">Opcional</p>
+        <p className="section-header">{t.optionalSection}</p>
         
         <div>
-          <Label htmlFor="promoCode">Código promocional</Label>
+          <Label htmlFor="promoCode">{t.promoCode}</Label>
           <Input
             id="promoCode"
             {...register('promoCode')}
@@ -342,12 +356,12 @@ export const CompanyForm = ({ onSubmit, onFormChange, defaultValues, isSubmittin
         </div>
 
         <div>
-          <Label htmlFor="onboardingNotes">Notas para el onboarding</Label>
+          <Label htmlFor="onboardingNotes">{t.onboardingNotes}</Label>
           <Textarea
             id="onboardingNotes"
             {...register('onboardingNotes')}
             className="input-premium mt-1.5 min-h-[80px]"
-            placeholder="Cuéntanos más sobre tu negocio, número de mesas, tipo de carta de vinos..."
+            placeholder={t.onboardingPlaceholder}
           />
         </div>
       </div>
