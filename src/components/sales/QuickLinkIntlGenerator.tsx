@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Copy, Check, Link2, DollarSign, Euro, Globe, CreditCard, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CheckoutLang, checkoutLangLabels } from '@/config/checkoutI18n';
 
 type BillingInterval = 'monthly' | 'quarterly' | 'semestral' | 'annual';
 type PaymentMethodOption = 'card' | 'us_bank_account' | 'customer_balance';
@@ -48,6 +49,7 @@ export const QuickLinkIntlGenerator = () => {
   const [currency, setCurrency] = useState<Currency>('EUR');
   const [customDescription, setCustomDescription] = useState('');
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
+  const [lang, setLang] = useState<CheckoutLang>('en');
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<PaymentMethodOption[]>(['card']);
 
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -91,6 +93,7 @@ export const QuickLinkIntlGenerator = () => {
       const url = new URL(result.url);
       url.searchParams.set('intl', '1');
       url.searchParams.set('currency', currency);
+      url.searchParams.set('lang', lang);
       setGeneratedLink(url.toString());
     } catch {
       toast({
@@ -116,6 +119,7 @@ export const QuickLinkIntlGenerator = () => {
     setCurrency('EUR');
     setCustomDescription('');
     setBillingInterval('monthly');
+    setLang('en');
     setSelectedPaymentMethods(['card']);
     setCopied(false);
   };
@@ -198,6 +202,24 @@ export const QuickLinkIntlGenerator = () => {
                 </Select>
               </div>
 
+              {/* Checkout page language */}
+              <div>
+                <Label>Checkout page language *</Label>
+                <Select value={lang} onValueChange={(v) => setLang(v as CheckoutLang)}>
+                  <SelectTrigger className="input-premium mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(checkoutLangLabels) as CheckoutLang[]).map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {checkoutLangLabels[l]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">The payment landing will be shown in this language.</p>
+              </div>
+
               {/* Description */}
               <div>
                 <Label htmlFor="intlDesc">Description</Label>
@@ -260,6 +282,10 @@ export const QuickLinkIntlGenerator = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Billing:</span>
                     <span className="text-sm font-medium text-foreground">{intervalLabel}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Language:</span>
+                    <span className="text-sm text-foreground">{checkoutLangLabels[lang]}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Methods:</span>
