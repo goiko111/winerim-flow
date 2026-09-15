@@ -242,11 +242,17 @@ serve(async (req) => {
         ...(winerimUserId && { winerimUserId: String(winerimUserId) }),
       };
 
-      logStep("Creating new customer (one-per-subscription policy)", { email: customerEmail, companyName: customerData.companyName });
+      // Legal name goes to the Stripe customer name (appears on the invoice)
+      const legalName = (customerData.companyName || customerData.restaurantName || '').trim();
+
+      logStep("Creating new customer (one-per-subscription policy)", { email: customerEmail, legalName });
       const newCustomer = await stripe.customers.create({
         email: customerEmail,
-        name: customerData.companyName,
+        name: legalName || undefined,
         phone: customerData.phone,
+        description: customerData.restaurantName && customerData.restaurantName !== legalName
+          ? `${legalName} (${customerData.restaurantName})`
+          : legalName || undefined,
         address: {
           line1: customerData.address,
           city: customerData.city,
@@ -257,20 +263,11 @@ serve(async (req) => {
         metadata: customerMetadata,
       });
       customerId = newCustomer.id;
-      logStep("Customer created", { customerId });
+      logStep("Customer created", { customerId, legalName });
 
-      // Add Tax ID (CIF/VAT) if provided
+      // Add Tax ID (CIF/VAT) if provided — required on the legal invoice
       if (customerData.vatId) {
-        try {
-          const taxType = getTaxIdType(customerData.country);
-          await stripe.customers.createTaxId(customerId, {
-            type: taxType,
-            value: customerData.vatId,
-          });
-          logStep("Tax ID added", { vatId: customerData.vatId, type: taxType });
-        } catch (taxError) {
-          logStep("Warning: Could not set Tax ID", { error: String(taxError) });
-        }
+        await attachTaxId(stripe, customerId, customerData.country, customerData.vatId);
       }
     }
 
