@@ -218,7 +218,9 @@ serve(async (req) => {
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
       billing_address_collection: 'auto',
-      customer_update: { address: 'auto', name: 'auto' },
+      // Keep the legal company name we already set on the customer
+      customer_update: { address: 'auto', name: customerData?.companyName ? 'never' : 'auto' },
+      tax_id_collection: { enabled: true },
       payment_method_types: validMethods,
       consent_collection: { terms_of_service: 'required' },
       subscription_data: {
