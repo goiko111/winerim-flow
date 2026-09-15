@@ -139,16 +139,19 @@ serve(async (req) => {
     const targetCurrency = (currency || 'USD').toLowerCase();
 
     if (customerEmail) {
-      // Legal name goes to the Stripe customer name (appears on the invoice)
-      const legalName = (customerData.companyName || customerData.customerName || '').trim();
-      const tradeName = customerData.restaurantName || '';
+      // Legal company name goes to the Stripe customer name (appears on the invoice).
+      // If there is no company (individual), the restaurant name is used as a
+      // trade name / "nickname" only — with no legal meaning.
+      const companyName = (customerData.companyName || '').trim();
+      const tradeName = (customerData.restaurantName || '').trim();
+      const legalName = companyName || tradeName || (customerData.customerName || '').trim();
 
       const customerParams = {
         email: customerEmail,
         name: legalName || undefined,
         phone: customerData.phone || undefined,
-        description: tradeName && tradeName !== legalName
-          ? `${legalName} (${tradeName})`
+        description: companyName && tradeName
+          ? `${companyName} (${tradeName})`
           : legalName || undefined,
         address: customerData.address ? {
           line1: customerData.address,

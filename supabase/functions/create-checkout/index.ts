@@ -242,17 +242,21 @@ serve(async (req) => {
         ...(winerimUserId && { winerimUserId: String(winerimUserId) }),
       };
 
-      // Legal name goes to the Stripe customer name (appears on the invoice)
-      const legalName = (customerData.companyName || customerData.restaurantName || '').trim();
+      // Legal company name goes to the Stripe customer name (appears on the invoice).
+      // If there is no company (individual), the restaurant name is used as a
+      // trade name / "nickname" only — with no legal meaning.
+      const companyName = (customerData.companyName || '').trim();
+      const tradeName = (customerData.restaurantName || '').trim();
+      const customerName = companyName || tradeName;
 
-      logStep("Creating new customer (one-per-subscription policy)", { email: customerEmail, legalName });
+      logStep("Creating new customer (one-per-subscription policy)", { email: customerEmail, customerName });
       const newCustomer = await stripe.customers.create({
         email: customerEmail,
-        name: legalName || undefined,
+        name: customerName || undefined,
         phone: customerData.phone,
-        description: customerData.restaurantName && customerData.restaurantName !== legalName
-          ? `${legalName} (${customerData.restaurantName})`
-          : legalName || undefined,
+        description: companyName && tradeName
+          ? `${companyName} (${tradeName})`
+          : customerName || undefined,
         address: {
           line1: customerData.address,
           city: customerData.city,
