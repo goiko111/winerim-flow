@@ -24,21 +24,90 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
   'bank_transfer': 'customer_balance', // Stripe uses customer_balance for bank transfers
 };
 
-// Tax ID type mapping by country
-const getTaxIdType = (country: string): string => {
-  const taxIdMap: Record<string, string> = {
-    'ES': 'es_cif',      // Spain CIF
-    'PT': 'pt_nif',      // Portugal NIF
-    'FR': 'fr_siret',    // France SIRET
-    'IT': 'it_vat',      // Italy VAT
-    'DE': 'de_stn',      // Germany Steuernummer
-    'AT': 'at_vat',      // Austria VAT
-    'BE': 'be_vat',      // Belgium VAT
-    'NL': 'nl_vat',      // Netherlands VAT
-    'IE': 'ie_vat',      // Ireland VAT
+// EU country codes (for eu_vat fallback)
+const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+
+// Normalize VAT/CIF: uppercase, remove spaces, dots and dashes
+const normalizeVat = (value: string): string =>
+  (value || '').toUpperCase().replace(/[\s.\-\/]/g, '');
+
+// Build an ordered list of {type, value} candidates to register in Stripe
+const getTaxIdCandidates = (countryRaw: string, vatRaw: string): Array<{ type: string; value: string }> => {
+  const country = (countryRaw || 'ES').toUpperCase();
+  const raw = normalizeVat(vatRaw);
+  if (!raw) return [];
+
+  // Strip country prefix if present (e.g. ESB12345678 -> B12345678)
+  const hasPrefix = raw.startsWith(country) && raw.length > country.length;
+  const bare = hasPrefix ? raw.slice(country.length) : raw;
+  const prefixed = `${country}${bare}`;
+
+  const specific: Record<string, string> = {
+    'ES': 'es_cif',
+    'PT': 'pt_nif',
+    'IT': 'it_vat',
+    'DE': 'de_stn',
+    'AT': 'at_vat',
+    'BE': 'be_vat',
+    'NL': 'nl_vat',
+    'IE': 'ie_vat',
+    'FR': 'fr_siret',
+    'GB': 'gb_vat',
+    'CH': 'ch_vat',
+    'NO': 'no_vat',
+    'MX': 'mx_rfc',
+    'AR': 'ar_cuit',
+    'CO': 'co_nit',
+    'BR': 'br_cnpj',
+    'CL': 'cl_tin',
+    'PE': 'pe_ruc',
+    'CR': 'cr_tin',
+    'US': 'us_ein',
+    'CA': 'ca_bn',
+    'AU': 'au_abn',
   };
-  return taxIdMap[country] || 'eu_vat';
+
+  const candidates: Array<{ type: string; value: string }> = [];
+  const specificType = specific[country];
+
+  if (country === 'ES') {
+    // Spanish CIF/NIF without prefix, then EU VAT with prefix as fallback
+    candidates.push({ type: 'es_cif', value: bare });
+    candidates.push({ type: 'eu_vat', value: prefixed });
+  } else if (EU_COUNTRIES.includes(country)) {
+    candidates.push({ type: 'eu_vat', value: prefixed });
+    if (specificType) candidates.push({ type: specificType, value: bare });
+  } else if (specificType) {
+    candidates.push({ type: specificType, value: bare });
+  }
+  // Last resort: never lose the number — Stripe accepts unknown as generic
+  candidates.push({ type: 'eu_vat', value: prefixed });
+  return candidates;
 };
+
+// Register the tax ID trying each candidate until Stripe accepts one
+async function attachTaxId(
+  stripe: Stripe,
+  customerId: string,
+  country: string,
+  vatId: string,
+): Promise<boolean> {
+  const candidates = getTaxIdCandidates(country, vatId);
+  for (const candidate of candidates) {
+    try {
+      await stripe.customers.createTaxId(customerId, {
+        type: candidate.type as Stripe.CustomerCreateTaxIdParams['type'],
+        value: candidate.value,
+      });
+      logStep("Tax ID added", candidate);
+      return true;
+    } catch (err) {
+      logStep("Tax ID candidate rejected", { ...candidate, error: String(err) });
+    }
+  }
+  logStep("WARNING: could not attach any Tax ID", { country, vatId });
+  return false;
+}
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
