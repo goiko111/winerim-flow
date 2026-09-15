@@ -139,10 +139,17 @@ serve(async (req) => {
     const targetCurrency = (currency || 'USD').toLowerCase();
 
     if (customerEmail) {
+      // Legal name goes to the Stripe customer name (appears on the invoice)
+      const legalName = (customerData.companyName || customerData.customerName || '').trim();
+      const tradeName = customerData.restaurantName || '';
+
       const customerParams = {
         email: customerEmail,
-        name: customerData.companyName || customerData.customerName,
+        name: legalName || undefined,
         phone: customerData.phone || undefined,
+        description: tradeName && tradeName !== legalName
+          ? `${legalName} (${tradeName})`
+          : legalName || undefined,
         address: customerData.address ? {
           line1: customerData.address,
           city: customerData.city || undefined,
@@ -151,6 +158,7 @@ serve(async (req) => {
         } : undefined,
         metadata: {
           companyName: customerData.companyName || '',
+          restaurantName: tradeName,
           vatId: customerData.vatId || '',
           source: 'winerim_intl_portal',
           currency: targetCurrency,
@@ -159,7 +167,12 @@ serve(async (req) => {
 
       const newCustomer = await stripe.customers.create(customerParams);
       customerId = newCustomer.id;
-      logStep("Created new customer (one-per-subscription policy)", { customerId, targetCurrency });
+      logStep("Created new customer (one-per-subscription policy)", { customerId, targetCurrency, legalName });
+
+      // Register the tax ID on the customer so it prints on the invoice
+      if (customerData.vatId) {
+        await attachTaxId(stripe, customerId, customerData.country, customerData.vatId);
+      }
     }
 
     // Use stable, reusable product so future price updates are possible
