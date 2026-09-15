@@ -306,14 +306,16 @@ serve(async (req) => {
       // Force address collection so Stripe Tax uses the address confirmed at checkout
       // (critical for regions like Canary Islands/Ceuta/Melilla where IVA does NOT apply)
       billing_address_collection: 'required',
-      // Update customer with the address confirmed in Stripe Checkout
+      // Update customer with the address confirmed in Stripe Checkout.
+      // Keep the legal company name we already set (never let Checkout overwrite it).
       customer_update: {
         address: 'auto',
-        name: 'auto',
+        name: customerData?.companyName ? 'never' : 'auto',
       },
       // Only ask for phone if we don't have it
       phone_number_collection: { enabled: !customerData?.phone },
-      tax_id_collection: { enabled: !customerData?.vatId },
+      // Always allow tax ID (prefilled when we already attached it) so it prints on the invoice
+      tax_id_collection: { enabled: true },
       payment_method_types: filteredPaymentMethods as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
       // Require terms acceptance in Stripe Checkout
       consent_collection: {
