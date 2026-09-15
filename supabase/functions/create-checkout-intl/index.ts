@@ -18,6 +18,57 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT-INTL] ${step}${detailsStr}`);
 };
 
+const EU_COUNTRIES = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
+
+const normalizeVat = (value: string): string =>
+  (value || '').toUpperCase().replace(/[\s.\-\/]/g, '');
+
+const SPECIFIC_TAX_TYPES: Record<string, string> = {
+  ES: 'es_cif', PT: 'pt_nif', IT: 'it_vat', DE: 'de_stn', AT: 'at_vat', BE: 'be_vat',
+  NL: 'nl_vat', IE: 'ie_vat', FR: 'fr_siret', GB: 'gb_vat', CH: 'ch_vat', NO: 'no_vat',
+  MX: 'mx_rfc', AR: 'ar_cuit', CO: 'co_nit', BR: 'br_cnpj', CL: 'cl_tin', PE: 'pe_ruc',
+  CR: 'cr_tin', US: 'us_ein', CA: 'ca_bn', AU: 'au_abn', NZ: 'nz_gst', JP: 'jp_cn',
+  SG: 'sg_uen', ZA: 'za_vat', AE: 'ae_trn', IN: 'in_gst',
+};
+
+const getTaxIdCandidates = (countryRaw: string, vatRaw: string): Array<{ type: string; value: string }> => {
+  const country = (countryRaw || '').toUpperCase();
+  const raw = normalizeVat(vatRaw);
+  if (!raw || !country) return [];
+  const hasPrefix = raw.startsWith(country) && raw.length > country.length;
+  const bare = hasPrefix ? raw.slice(country.length) : raw;
+  const prefixed = `${country}${bare}`;
+  const specificType = SPECIFIC_TAX_TYPES[country];
+
+  const candidates: Array<{ type: string; value: string }> = [];
+  if (country === 'ES') {
+    candidates.push({ type: 'es_cif', value: bare }, { type: 'eu_vat', value: prefixed });
+  } else if (EU_COUNTRIES.includes(country)) {
+    candidates.push({ type: 'eu_vat', value: prefixed });
+    if (specificType) candidates.push({ type: specificType, value: bare });
+  } else if (specificType) {
+    candidates.push({ type: specificType, value: bare });
+  }
+  return candidates;
+};
+
+async function attachTaxId(stripe: Stripe, customerId: string, country: string, vatId: string) {
+  for (const candidate of getTaxIdCandidates(country, vatId)) {
+    try {
+      await stripe.customers.createTaxId(customerId, {
+        type: candidate.type as Stripe.CustomerCreateTaxIdParams['type'],
+        value: candidate.value,
+      });
+      logStep("Tax ID added", candidate);
+      return true;
+    } catch (err) {
+      logStep("Tax ID candidate rejected", { ...candidate, error: String(err) });
+    }
+  }
+  logStep("WARNING: could not attach any Tax ID", { country, vatId });
+  return false;
+}
+
 let cachedStableProductId: string | null = null;
 async function getOrCreateStableProduct(stripe: Stripe): Promise<string> {
   if (cachedStableProductId) return cachedStableProductId;
@@ -88,10 +139,17 @@ serve(async (req) => {
     const targetCurrency = (currency || 'USD').toLowerCase();
 
     if (customerEmail) {
+      // Legal name goes to the Stripe customer name (appears on the invoice)
+      const legalName = (customerData.companyName || customerData.customerName || '').trim();
+      const tradeName = customerData.restaurantName || '';
+
       const customerParams = {
         email: customerEmail,
-        name: customerData.companyName || customerData.customerName,
+        name: legalName || undefined,
         phone: customerData.phone || undefined,
+        description: tradeName && tradeName !== legalName
+          ? `${legalName} (${tradeName})`
+          : legalName || undefined,
         address: customerData.address ? {
           line1: customerData.address,
           city: customerData.city || undefined,
@@ -100,6 +158,7 @@ serve(async (req) => {
         } : undefined,
         metadata: {
           companyName: customerData.companyName || '',
+          restaurantName: tradeName,
           vatId: customerData.vatId || '',
           source: 'winerim_intl_portal',
           currency: targetCurrency,
@@ -108,7 +167,12 @@ serve(async (req) => {
 
       const newCustomer = await stripe.customers.create(customerParams);
       customerId = newCustomer.id;
-      logStep("Created new customer (one-per-subscription policy)", { customerId, targetCurrency });
+      logStep("Created new customer (one-per-subscription policy)", { customerId, targetCurrency, legalName });
+
+      // Register the tax ID on the customer so it prints on the invoice
+      if (customerData.vatId) {
+        await attachTaxId(stripe, customerId, customerData.country, customerData.vatId);
+      }
     }
 
     // Use stable, reusable product so future price updates are possible
@@ -154,7 +218,9 @@ serve(async (req) => {
       success_url: successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
       billing_address_collection: 'auto',
-      customer_update: { address: 'auto', name: 'auto' },
+      // Keep the legal company name we already set on the customer
+      customer_update: { address: 'auto', name: customerData?.companyName ? 'never' : 'auto' },
+      tax_id_collection: { enabled: true },
       payment_method_types: validMethods,
       consent_collection: { terms_of_service: 'required' },
       subscription_data: {
