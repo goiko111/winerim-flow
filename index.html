@@ -17,26 +17,63 @@
     <meta name="twitter:site" content="@winerim" />
     <meta name="twitter:image" content="/favicon.png" />
 
-        <!-- Meta Pixel Code -->
-        <script>
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-                    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                   if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                   n.queue=[];t=b.createElement(e);t.async=!0;
-                   t.src=v;s=b.getElementsByTagName(e)[0];
-                   s.parentNode.insertBefore(t,s)}(window, document,'script',
-                                                       'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '557504139395422');
-              fbq('track', 'PageView');
-        </script>
-      <!-- End Meta Pixel Code -->
+    <!-- Google Consent Mode v2 - initialised before GTM loads -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+
+      var _storedConsent = null;
+      try { _storedConsent = localStorage.getItem('winerim_cookie_consent'); } catch(e){}
+
+      var _consentState = _storedConsent === 'accepted' ? 'granted' : 'denied';
+
+      gtag('consent', 'default', {
+        'analytics_storage': _consentState,
+        'ad_storage': _consentState,
+        'ad_user_data': _consentState,
+        'ad_personalization': _consentState,
+        'wait_for_update': _storedConsent ? 0 : 500
+      });
+
+      gtag('set', 'ads_data_redaction', true);
+      gtag('set', 'url_passthrough', true);
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>
+      (function(w,d,s,l,i){
+        w[l] = w[l] || [];
+        w.__winerimGtmLoaded = false;
+        w.__winerimLoadGtm = function() {
+          if (w.__winerimGtmLoaded) return;
+          w.__winerimGtmLoaded = true;
+          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        };
+        var scheduleGtm = function() {
+          if ('requestIdleCallback' in w) {
+            w.requestIdleCallback(w.__winerimLoadGtm, { timeout: 3000 });
+          } else {
+            w.setTimeout(w.__winerimLoadGtm, 1800);
+          }
+        };
+        if (d.readyState === 'complete') scheduleGtm();
+        else w.addEventListener('load', scheduleGtm, { once: true });
+      })(window,document,'script','dataLayer','GTM-NDNQP955');
+    </script>
+    <!-- End Google Tag Manager -->
   </head>
 
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=557504139395422&ev=PageView&noscript=1"
-    /></noscript>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NDNQP955"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

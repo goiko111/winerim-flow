@@ -7,19 +7,29 @@
 declare global {
     interface Window {
           fbq?: (...args: unknown[]) => void;
+          dataLayer?: unknown[];
     }
 }
 
 /**
  * Track a Meta Lead conversion event when a form is submitted.
- * Safe no-op if fbq is not loaded.
+ * Also pushes a GTM dataLayer event so the tag can fire from Tag Manager.
  */
-export function trackMetaLead(formType?: string): void {
+export function trackMetaLead(formType?: string, contentCategory = 'lead'): void {
     try {
+          if (typeof window !== 'undefined') {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                      event: 'winerim_lead',
+                      content_name: formType || 'form',
+                      content_category: contentCategory,
+                });
+          }
+
           if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
                   window.fbq('track', 'Lead', {
                             content_name: formType || 'form',
-                            content_category: 'lead',
+                            content_category: contentCategory,
                   });
                   console.log(`[Meta Pixel] Lead event fired for form: ${formType || 'unknown'}`);
           }
