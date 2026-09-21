@@ -312,9 +312,10 @@ serve(async (req) => {
       billing_address_collection: 'required',
       // Update customer with the address confirmed in Stripe Checkout.
       // Keep the legal company name we already set (never let Checkout overwrite it).
+      // Stripe requires name: 'auto' whenever tax_id_collection is enabled
       customer_update: {
         address: 'auto',
-        name: customerData?.companyName ? 'never' : 'auto',
+        name: 'auto',
       },
       // Only ask for phone if we don't have it
       phone_number_collection: { enabled: !customerData?.phone },

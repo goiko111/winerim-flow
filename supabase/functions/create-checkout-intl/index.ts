@@ -222,7 +222,7 @@ serve(async (req) => {
       cancel_url: cancelUrl || `${origin}/checkout/cancel`,
       billing_address_collection: 'auto',
       // Keep the legal company name we already set on the customer
-      customer_update: { address: 'auto', name: customerData?.companyName ? 'never' : 'auto' },
+      customer_update: { address: 'auto', name: 'auto' },
       tax_id_collection: { enabled: true },
       payment_method_types: validMethods,
       consent_collection: { terms_of_service: 'required' },
