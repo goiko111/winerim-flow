@@ -267,7 +267,7 @@ serve(async (req) => {
         metadata: customerMetadata,
       });
       customerId = newCustomer.id;
-      logStep("Customer created", { customerId, legalName });
+      logStep("Customer created", { customerId, customerName });
 
       // Add Tax ID (CIF/VAT) if provided — required on the legal invoice
       if (customerData.vatId) {
