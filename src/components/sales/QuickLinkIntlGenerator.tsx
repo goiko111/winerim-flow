@@ -1,3 +1,4 @@
+import { WinerimUserIdField, isValidWinerimUserId, parseWinerimUserId } from '@/components/sales/WinerimUserIdField';
 import { useState } from 'react';
 import { createCheckoutLink } from '@/lib/checkoutLinks';
 import { useExchangeRate, roundToFriendly } from '@/hooks/useExchangeRate';
@@ -54,6 +55,8 @@ export const QuickLinkIntlGenerator = () => {
 
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isExistingRestaurant, setIsExistingRestaurant] = useState(false);
+  const [winerimUserIdInput, setWinerimUserIdInput] = useState('');
 
   const togglePaymentMethod = (method: PaymentMethodOption) => {
     setSelectedPaymentMethods(prev => {
@@ -88,6 +91,7 @@ export const QuickLinkIntlGenerator = () => {
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
         currency,
+        winerimUserId: parseWinerimUserId(isExistingRestaurant, winerimUserIdInput),
       });
       // Append intl params
       const url = new URL(result.url);
@@ -122,11 +126,13 @@ export const QuickLinkIntlGenerator = () => {
     setLang('en');
     setSelectedPaymentMethods(['card']);
     setCopied(false);
+    setIsExistingRestaurant(false);
+    setWinerimUserIdInput('');
   };
 
   const priceNumVal = parseFloat(customPrice);
   const isBelowMinimum = customPrice !== '' && !isNaN(priceNumVal) && priceNumVal > 0 && priceNumVal < 0.5;
-  const canGenerate = customPrice && priceNumVal >= 0.5 && selectedPaymentMethods.length > 0;
+  const canGenerate = customPrice && priceNumVal >= 0.5 && selectedPaymentMethods.length > 0 && isValidWinerimUserId(isExistingRestaurant, winerimUserIdInput);
   const intervalLabel = BILLING_INTERVALS.find(i => i.value === billingInterval)?.label || '';
 
   return (
@@ -232,6 +238,7 @@ export const QuickLinkIntlGenerator = () => {
                 />
               </div>
 
+              <WinerimUserIdField existing={isExistingRestaurant} onExistingChange={setIsExistingRestaurant} value={winerimUserIdInput} onValueChange={setWinerimUserIdInput} lang="en" />
               {/* Payment methods */}
               <div className="space-y-3">
                 <Label>Allowed payment methods *</Label>
