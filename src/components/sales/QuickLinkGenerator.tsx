@@ -1,3 +1,4 @@
+import { WinerimUserIdField, isValidWinerimUserId, parseWinerimUserId } from '@/components/sales/WinerimUserIdField';
 import { useState } from 'react';
 import { createCheckoutLink } from '@/lib/checkoutLinks';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,8 @@ export const QuickLinkGenerator = () => {
   
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isExistingRestaurant, setIsExistingRestaurant] = useState(false);
+  const [winerimUserIdInput, setWinerimUserIdInput] = useState('');
 
   const togglePaymentMethod = (method: PaymentMethodOption) => {
     setSelectedPaymentMethods(prev => {
@@ -71,6 +74,7 @@ export const QuickLinkGenerator = () => {
         billingInterval,
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
+        winerimUserId: parseWinerimUserId(isExistingRestaurant, winerimUserIdInput),
       });
       setGeneratedLink(result.url);
     } catch (err) {
@@ -98,6 +102,8 @@ export const QuickLinkGenerator = () => {
     setGeneratedLink(null);
     setCustomPrice('');
     setCustomDescription('');
+    setIsExistingRestaurant(false);
+    setWinerimUserIdInput('');
     setBillingInterval('monthly');
     setSelectedPaymentMethods(['card', 'sepa_debit']);
     setCopied(false);
@@ -105,7 +111,7 @@ export const QuickLinkGenerator = () => {
 
   const priceNum = parseFloat(customPrice);
   const isBelowMinimum = customPrice !== '' && !isNaN(priceNum) && priceNum > 0 && priceNum < 0.5;
-  const canGenerate = customPrice && priceNum >= 0.5 && selectedPaymentMethods.length > 0;
+  const canGenerate = customPrice && priceNum >= 0.5 && selectedPaymentMethods.length > 0 && isValidWinerimUserId(isExistingRestaurant, winerimUserIdInput);
 
   const intervalLabel = BILLING_INTERVALS.find(i => i.value === billingInterval)?.label || '';
 
@@ -185,6 +191,7 @@ export const QuickLinkGenerator = () => {
                 />
               </div>
 
+              <WinerimUserIdField existing={isExistingRestaurant} onExistingChange={setIsExistingRestaurant} value={winerimUserIdInput} onValueChange={setWinerimUserIdInput} lang="es" />
               {/* Payment methods */}
               <div className="space-y-3">
                 <Label>Métodos de pago permitidos *</Label>

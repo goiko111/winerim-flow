@@ -119,9 +119,10 @@ serve(async (req) => {
       description,
       successUrl,
       cancelUrl,
+      winerimUserId,
     } = body;
 
-    logStep("Request body parsed", { price, currency, billingInterval, paymentMethods });
+    logStep("Request body parsed", { price, currency, billingInterval, paymentMethods, winerimUserId });
 
     const intervalKey = billingInterval || 'monthly';
     const intervalConfig = INTERVAL_CONFIG[intervalKey];
@@ -165,6 +166,7 @@ serve(async (req) => {
           vatId: customerData.vatId || '',
           source: 'winerim_intl_portal',
           currency: targetCurrency,
+          ...(winerimUserId && { winerimUserId: String(winerimUserId) }),
         },
       };
 
@@ -233,6 +235,7 @@ serve(async (req) => {
           companyName: customerData?.companyName || '',
           vatId: customerData?.vatId || '',
           source: 'winerim_intl_portal',
+          ...(winerimUserId && { userId: String(winerimUserId) }),
         },
       },
     };

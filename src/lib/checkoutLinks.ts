@@ -42,6 +42,7 @@ export async function createCheckoutLink(data: CheckoutLinkData): Promise<Checko
       payment_methods: data.paymentMethods,
       description: data.description || null,
       currency: data.currency || 'EUR',
+      winerim_user_id: data.winerimUserId ?? null,
     })
     .select('code')
     .single();

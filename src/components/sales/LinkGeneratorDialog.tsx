@@ -1,3 +1,4 @@
+import { WinerimUserIdField, isValidWinerimUserId, parseWinerimUserId } from '@/components/sales/WinerimUserIdField';
 import { useState } from 'react';
 import { plans, Plan } from '@/config/plans';
 import { appConfig } from '@/config/app';
@@ -57,6 +58,8 @@ export const LinkGeneratorDialog = ({
   const [useCustomPrice, setUseCustomPrice] = useState(false);
   const [customPrice, setCustomPrice] = useState<string>('');
   const [customDescription, setCustomDescription] = useState<string>('');
+  const [isExistingRestaurant, setIsExistingRestaurant] = useState(false);
+  const [winerimUserIdInput, setWinerimUserIdInput] = useState('');
 
   const plan = plans.find((p) => p.planSlug === selectedPlan);
 
@@ -97,6 +100,7 @@ export const LinkGeneratorDialog = ({
         billingInterval: useCustomPrice ? billingInterval : undefined,
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
+        winerimUserId: parseWinerimUserId(isExistingRestaurant, winerimUserIdInput),
       });
 
       const checkoutUrl = result.url;
@@ -187,9 +191,11 @@ El equipo de Winerim`);
     setUseCustomPrice(false);
     setCustomPrice('');
     setCustomDescription('');
+    setIsExistingRestaurant(false);
+    setWinerimUserIdInput('');
   };
 
-  const canGenerate = selectedPaymentMethods.length > 0 && (!useCustomPrice || customPrice);
+  const canGenerate = selectedPaymentMethods.length > 0 && (!useCustomPrice || customPrice) && isValidWinerimUserId(isExistingRestaurant, winerimUserIdInput);
 
   return (
     <Dialog
@@ -281,6 +287,7 @@ El equipo de Winerim`);
                   )}
                 </div>
 
+                <WinerimUserIdField existing={isExistingRestaurant} onExistingChange={setIsExistingRestaurant} value={winerimUserIdInput} onValueChange={setWinerimUserIdInput} lang="es" />
                 {/* Price preview */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
                   <span className="text-sm text-muted-foreground">Importe final:</span>
