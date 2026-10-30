@@ -1,7 +1,6 @@
 import { WinerimUserIdField, isValidWinerimUserId, parseWinerimUserId } from '@/components/sales/WinerimUserIdField';
 import { useState } from 'react';
 import { createCheckoutLink } from '@/lib/checkoutLinks';
-import { useExchangeRate, roundToFriendly } from '@/hooks/useExchangeRate';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -43,7 +42,6 @@ const PAYMENT_METHODS: { value: PaymentMethodOption; label: string; icon: typeof
 
 export const QuickLinkIntlGenerator = () => {
   const { toast } = useToast();
-  const { convertToUsd } = useExchangeRate();
   const [open, setOpen] = useState(false);
 
   const [customPrice, setCustomPrice] = useState('');
@@ -73,7 +71,7 @@ export const QuickLinkIntlGenerator = () => {
     const num = parseFloat(customPrice);
     if (isNaN(num)) return '';
     if (currency === 'USD') {
-      return `$${convertToUsd(num)} (~${num}€)`;
+      return `$${num}`;
     }
     return `${num}€`;
   };
@@ -81,7 +79,8 @@ export const QuickLinkIntlGenerator = () => {
   const handleGenerateLink = async () => {
     if (!customPrice) return;
     const priceNum = parseFloat(customPrice);
-    const finalPrice = currency === 'USD' ? convertToUsd(priceNum) : priceNum;
+    // The entered amount is used as-is in the selected currency (no conversion)
+    const finalPrice = priceNum;
 
     try {
       const result = await createCheckoutLink({
@@ -158,9 +157,13 @@ export const QuickLinkIntlGenerator = () => {
               {/* Price + Currency */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <Label htmlFor="intlPrice">Amount (EUR base) *</Label>
+                  <Label htmlFor="intlPrice">Amount *</Label>
                   <div className="relative mt-1.5">
-                    <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    {currency === 'USD' ? (
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    )}
                     <Input
                       id="intlPrice"
                       type="number"
