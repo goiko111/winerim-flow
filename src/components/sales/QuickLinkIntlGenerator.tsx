@@ -73,7 +73,7 @@ export const QuickLinkIntlGenerator = () => {
     const num = parseFloat(customPrice);
     if (isNaN(num)) return '';
     if (currency === 'USD') {
-      return `$${convertToUsd(num)} (~${num}€)`;
+      return `$${num}`;
     }
     return `${num}€`;
   };
@@ -81,7 +81,8 @@ export const QuickLinkIntlGenerator = () => {
   const handleGenerateLink = async () => {
     if (!customPrice) return;
     const priceNum = parseFloat(customPrice);
-    const finalPrice = currency === 'USD' ? convertToUsd(priceNum) : priceNum;
+    // The entered amount is used as-is in the selected currency (no conversion)
+    const finalPrice = priceNum;
 
     try {
       const result = await createCheckoutLink({
