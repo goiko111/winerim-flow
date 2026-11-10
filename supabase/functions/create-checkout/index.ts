@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
+import { uppercaseStripeCustomerData } from "../_shared/stripeCustomerData.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -165,11 +166,12 @@ serve(async (req) => {
       customDescription,
       billingInterval,
       paymentMethods,
-      customerData,
+      customerData: rawCustomerData,
       successUrl,
       cancelUrl,
       winerimUserId,
     } = body;
+    const customerData = uppercaseStripeCustomerData(rawCustomerData);
 
     logStep("Request body parsed", { 
       planSlug, 
