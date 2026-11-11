@@ -105,6 +105,7 @@ export type Database = {
           phone: string | null
           plan_slug: string
           postal_code: string | null
+          product_key: string | null
           vat_id: string | null
           winerim_user_id: number | null
         }
@@ -126,6 +127,7 @@ export type Database = {
           phone?: string | null
           plan_slug: string
           postal_code?: string | null
+          product_key?: string | null
           vat_id?: string | null
           winerim_user_id?: number | null
         }
@@ -147,6 +149,7 @@ export type Database = {
           phone?: string | null
           plan_slug?: string
           postal_code?: string | null
+          product_key?: string | null
           vat_id?: string | null
           winerim_user_id?: number | null
         }
