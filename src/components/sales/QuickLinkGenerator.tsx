@@ -1,6 +1,8 @@
 import { WinerimUserIdField, isValidWinerimUserId, parseWinerimUserId } from '@/components/sales/WinerimUserIdField';
 import { useState } from 'react';
 import { createCheckoutLink } from '@/lib/checkoutLinks';
+import { StripeProductField } from './StripeProductField';
+import type { StripeProductKey } from '@/config/stripeProducts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -52,6 +54,7 @@ export const QuickLinkGenerator = () => {
   const [copied, setCopied] = useState(false);
   const [isExistingRestaurant, setIsExistingRestaurant] = useState(false);
   const [winerimUserIdInput, setWinerimUserIdInput] = useState('');
+  const [productKey, setProductKey] = useState<StripeProductKey>('winerim');
 
   const togglePaymentMethod = (method: PaymentMethodOption) => {
     setSelectedPaymentMethods(prev => {
@@ -75,6 +78,7 @@ export const QuickLinkGenerator = () => {
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
         winerimUserId: parseWinerimUserId(isExistingRestaurant, winerimUserIdInput),
+        productKey,
       });
       setGeneratedLink(result.url);
     } catch (err) {
@@ -191,6 +195,7 @@ export const QuickLinkGenerator = () => {
                 />
               </div>
 
+              <StripeProductField value={productKey} onChange={setProductKey} />
               <WinerimUserIdField existing={isExistingRestaurant} onExistingChange={setIsExistingRestaurant} value={winerimUserIdInput} onValueChange={setWinerimUserIdInput} lang="es" />
               {/* Payment methods */}
               <div className="space-y-3">

@@ -142,6 +142,30 @@ async function getOrCreateStableProduct(stripe: Stripe): Promise<string> {
   return product.id;
 }
 
+const CATALOG_PRODUCT_NAMES: Record<string, string> = {
+  winerim: 'SUSCRIPCIÓN APP WINERIM',
+  tpv: 'SUSCRIPCIÓN INTEGRACIÓN TPV',
+  spiritsrim: 'SUSCRIPCIÓN APP SPIRITSRIM',
+};
+const catalogCache: Record<string, string> = {};
+
+/** Busca el producto del catálogo de Stripe por nombre; si no existe, usa el producto estable. */
+async function getCatalogProduct(stripe: Stripe, key?: string): Promise<string> {
+  const name = key ? CATALOG_PRODUCT_NAMES[key] : undefined;
+  if (!name) return getOrCreateStableProduct(stripe);
+  if (catalogCache[key!]) return catalogCache[key!];
+  try {
+    const list = await stripe.products.list({ active: true, limit: 100 });
+    const norm = (s: string) => s.trim().toUpperCase();
+    const found = list.data.find((p) => norm(p.name) === norm(name));
+    if (found) { catalogCache[key!] = found.id; return found.id; }
+    logStep("Catalog product not found, using stable", { key, name });
+  } catch (err) {
+    logStep("Catalog product lookup failed", { err: String(err) });
+  }
+  return getOrCreateStableProduct(stripe);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -170,6 +194,7 @@ serve(async (req) => {
       successUrl,
       cancelUrl,
       winerimUserId,
+      productKey,
     } = body;
     const customerData = uppercaseStripeCustomerData(rawCustomerData);
 
@@ -208,7 +233,7 @@ serve(async (req) => {
     });
 
     // Use stable, reusable product so future price updates are possible
-    const stableProductId = await getOrCreateStableProduct(stripe);
+    const stableProductId = await getCatalogProduct(stripe, productKey);
 
     // Build line items with price_data attached to the stable product
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{

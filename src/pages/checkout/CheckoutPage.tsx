@@ -34,6 +34,7 @@ export const CheckoutPage = () => {
         ? decodeURIComponent(searchParams.get('customDesc')!)
         : null;
   const billingInterval = searchParams.get('i') || searchParams.get('interval') || null;
+  const productKey = searchParams.get('pr');
   const winerimUserId = searchParams.get('uid') ? Number(searchParams.get('uid')) : null;
   const allowedMethods = (searchParams.get('m') || searchParams.get('methods'))?.split(',') || null;
   const isIntl = searchParams.get('intl') === '1';
@@ -212,6 +213,7 @@ export const CheckoutPage = () => {
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/checkout/cancel`,
         ...(winerimUserId && { winerimUserId }),
+        ...(productKey && { productKey }),
       };
       if (isIntl) {
         bodyPayload.price = customPrice || effectivePlan.price;

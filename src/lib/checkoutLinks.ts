@@ -16,6 +16,7 @@ export interface CheckoutLinkData {
   description?: string;
   winerimUserId?: number;
   currency?: string;
+  productKey?: string;
 }
 
 export interface CheckoutLinkResult {
@@ -43,6 +44,7 @@ export async function createCheckoutLink(data: CheckoutLinkData): Promise<Checko
       description: data.description || null,
       currency: data.currency || 'EUR',
       winerim_user_id: data.winerimUserId ?? null,
+      product_key: data.productKey || null,
     })
     .select('code')
     .single();
@@ -80,5 +82,6 @@ export async function getCheckoutLink(code: string): Promise<CheckoutLinkData | 
     description: data.description ?? undefined,
     winerimUserId: data.winerim_user_id ?? undefined,
     currency: data.currency ?? undefined,
+    productKey: data.product_key ?? undefined,
   };
 }
