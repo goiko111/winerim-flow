@@ -4,6 +4,8 @@ import { plans, Plan } from '@/config/plans';
 import { appConfig } from '@/config/app';
 import { Customer, ActivityLog, saveActivityLog, generateId } from '@/lib/salesStore';
 import { createCheckoutLink } from '@/lib/checkoutLinks';
+import { StripeProductField } from './StripeProductField';
+import type { StripeProductKey } from '@/config/stripeProducts';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -60,6 +62,7 @@ export const LinkGeneratorDialog = ({
   const [customDescription, setCustomDescription] = useState<string>('');
   const [isExistingRestaurant, setIsExistingRestaurant] = useState(false);
   const [winerimUserIdInput, setWinerimUserIdInput] = useState('');
+  const [productKey, setProductKey] = useState<StripeProductKey>('winerim');
 
   const plan = plans.find((p) => p.planSlug === selectedPlan);
 
@@ -101,6 +104,7 @@ export const LinkGeneratorDialog = ({
         paymentMethods: selectedPaymentMethods,
         description: customDescription || undefined,
         winerimUserId: parseWinerimUserId(isExistingRestaurant, winerimUserIdInput),
+        productKey,
       });
 
       const checkoutUrl = result.url;
@@ -287,6 +291,7 @@ El equipo de Winerim`);
                   )}
                 </div>
 
+                <StripeProductField value={productKey} onChange={setProductKey} />
                 <WinerimUserIdField existing={isExistingRestaurant} onExistingChange={setIsExistingRestaurant} value={winerimUserIdInput} onValueChange={setWinerimUserIdInput} lang="es" />
                 {/* Price preview */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
